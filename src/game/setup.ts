@@ -1,4 +1,5 @@
 import { add, cell, DIRS, eq, inBounds, mirror } from './board';
+import { markRound } from './game';
 import { Rng } from './rng';
 import type { Cell, GameState, Pos, Rules } from './types';
 
@@ -60,5 +61,6 @@ export function createGame(rules: Rules, seed: number): GameState {
   });
 
   state.rng = rng.state;
+  markRound(state);
   return state;
 }
