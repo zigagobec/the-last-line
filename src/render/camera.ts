@@ -20,13 +20,20 @@ export class OrbitCamera {
   /** Zoom multiplier on top of the aspect-fitted base distance. */
   zoomLevel = 1;
   private base: number;
-  target: Vec3 = [0, -0.5, 0.15];
+  target: Vec3 = [0, -0.9, 0.2];
   readonly fov = FOV;
   private goal: { yaw: number; pitch: number; zoom: number };
 
-  constructor(private readonly size: number) {
+  constructor(private size: number) {
     this.base = size * 2.6;
     this.goal = { yaw: this.yaw, pitch: this.pitch, zoom: 1 };
+  }
+
+  /** Default view for a board of `size`, keeping the current yaw so a rematch doesn't spin the board. */
+  resetFor(size: number): void {
+    this.size = size;
+    this.goal.pitch = 0.66;
+    this.goal.zoom = 1;
   }
 
   get distance(): number {

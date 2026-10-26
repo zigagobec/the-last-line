@@ -1,4 +1,4 @@
-import { allPositions, cell, type BridgeDir, type GameState } from '../game';
+import { allPositions, cell, type BridgeDir, type GameState, type PlayerId, type Pos } from '../game';
 import type { Vec3, Vec4 } from '../render/math';
 import { tileCenter } from '../render/camera';
 
@@ -31,6 +31,8 @@ export interface BridgeView {
 export type SpriteName = 'tree' | 'sign' | 'rat0' | 'rat1' | 'poof';
 
 export interface SpriteView {
+  /** Stable identity for animations, e.g. `tree:3,4`, `sign:3,4`, `rat0`. */
+  key: string;
   name: SpriteName;
   /** Bottom-centre anchor in world space. */
   pos: Vec3;
@@ -45,6 +47,8 @@ export interface SpriteView {
 
 export interface SceneView {
   size: number;
+  /** Game seed, for per-cell decoration. */
+  seed: number;
   tiles: TileView[];
   bridges: BridgeView[];
   sprites: SpriteView[];
@@ -66,7 +70,7 @@ export function cellSeed(x: number, y: number, seed: number): number {
 /** Static picture of a game state; the animator layers motion on top. */
 export function buildSceneView(s: GameState, time = 0): SceneView {
   const n = s.rules.size;
-  const view: SceneView = { size: n, tiles: [], bridges: [], sprites: [], time };
+  const view: SceneView = { size: n, seed: s.seed, tiles: [], bridges: [], sprites: [], time };
   for (const p of allPositions(s)) {
     const c = cell(s, p);
     const r = cellSeed(p.x, p.y, s.seed);
@@ -80,19 +84,33 @@ export function buildSceneView(s: GameState, time = 0): SceneView {
         decal: r < 0.55 ? Math.floor(r * 7.27) % 4 : -1,
         seed: r,
       });
-      const top = tileCenter(n, p);
-      if (c.tree) view.sprites.push(sprite('tree', top, TREE_HEIGHT, r < 0.5));
-      if (c.marked) view.sprites.push(sprite('sign', [top[0] + 0.28, 0, top[2] - 0.28], SIGN_HEIGHT, false));
+      if (c.tree) view.sprites.push(treeSprite(n, p, r));
+      if (c.marked) view.sprites.push(signSprite(n, p));
     }
     if (c.bridge) view.bridges.push({ x: p.x, y: p.y, dir: c.bridge, ghost: false, tint: NO_TINT, drop: 0 });
   }
   s.players.forEach((pl, id) => {
     if (s.fallen[id]) return;
-    view.sprites.push(sprite(id === 0 ? 'rat0' : 'rat1', tileCenter(n, pl), RAT_HEIGHT, id === 1));
+    view.sprites.push(ratSprite(n, id as PlayerId, pl));
   });
   return view;
 }
 
-export function sprite(name: SpriteName, pos: Vec3, height: number, flip: boolean): SpriteView {
-  return { name, pos, height, alpha: 1, flip, reveal: 1, tint: NO_TINT };
+export function sprite(key: string, name: SpriteName, pos: Vec3, height: number, flip: boolean): SpriteView {
+  return { key, name, pos, height, alpha: 1, flip, reveal: 1, tint: NO_TINT };
+}
+
+export const posKey = (p: Pos) => `${p.x},${p.y}`;
+
+export function treeSprite(size: number, p: Pos, seed: number): SpriteView {
+  return sprite(`tree:${posKey(p)}`, 'tree', tileCenter(size, p), TREE_HEIGHT, seed < 0.5);
+}
+
+export function signSprite(size: number, p: Pos): SpriteView {
+  const c = tileCenter(size, p);
+  return sprite(`sign:${posKey(p)}`, 'sign', [c[0] + 0.28, 0, c[2] - 0.28], SIGN_HEIGHT, false);
+}
+
+export function ratSprite(size: number, id: PlayerId, p: Pos): SpriteView {
+  return sprite(`rat${id}`, id === 0 ? 'rat0' : 'rat1', tileCenter(size, p), RAT_HEIGHT, id === 1);
 }

@@ -53,7 +53,7 @@ export class Renderer {
 
   private constructor(
     private readonly gpu: Gpu,
-    private readonly atlas: Atlas,
+    readonly atlas: Atlas,
     private readonly scenePipe: GPURenderPipeline,
     private readonly compositePipe: GPURenderPipeline,
     private readonly spritePipe: GPURenderPipeline,

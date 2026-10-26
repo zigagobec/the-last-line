@@ -18,6 +18,17 @@ export const DECALS: DecalName[] = ['decal0', 'decal1', 'decal2', 'decal3'];
 export interface Atlas {
   texture: GPUTexture;
   frames: Partial<Record<FrameName, Frame>>;
+  /** CPU copy of the sheet's alpha, for pixel-accurate clicking on sprites. */
+  alpha?: { data: Uint8ClampedArray; width: number; height: number };
+}
+
+/** Alpha (0..1) of `frame` at local coordinates u, v in 0..1 (v = 0 at the top). */
+export function frameAlpha(atlas: Atlas, frame: Frame, u: number, v: number): number {
+  const a = atlas.alpha;
+  if (!a) return 1;
+  const x = Math.min(a.width - 1, Math.max(0, Math.floor((frame.u0 + (frame.u1 - frame.u0) * u) * a.width)));
+  const y = Math.min(a.height - 1, Math.max(0, Math.floor((frame.v0 + (frame.v1 - frame.v0) * v) * a.height)));
+  return a.data[(y * a.width + x) * 4 + 3] / 255;
 }
 
 export function emptyAtlas(device: GPUDevice): Atlas {
@@ -145,5 +156,6 @@ export async function buildAtlas(device: GPUDevice, base = './sprites/'): Promis
       [level.width, level.height],
     );
   }
-  return { texture, frames };
+  const img = ctx.getImageData(0, 0, ATLAS_W, ATLAS_H);
+  return { texture, frames, alpha: { data: img.data, width: ATLAS_W, height: ATLAS_H } };
 }

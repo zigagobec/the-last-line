@@ -1,2 +1,110 @@
-html, body { margin: 0; height: 100%; overflow: hidden; background: #f4f1e9; }
+:root {
+  --ink: #1f1c21;
+  --paper: #fdfbf4;
+  --paper-2: #f4f1e9;
+  --pc: #2d6cdf;
+  --font: 'Patrick Hand', 'Comic Sans MS', 'Segoe Print', cursive;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
 #gfx { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+button { font-family: inherit; color: inherit; cursor: pointer; }
+
+.paper {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 14px 10px 13px 9px / 10px 14px 9px 13px;
+  box-shadow: 2px 3px 0 rgba(31, 28, 33, 0.85);
+}
+
+.hud { position: fixed; inset: 0; pointer-events: none; }
+.hud.hidden { display: none; }
+.hud button, .hud .status { pointer-events: auto; }
+
+.hud-top {
+  position: absolute; top: 12px; left: 12px; right: 12px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+}
+.status { padding: 6px 14px 8px; transform: rotate(-0.6deg); max-width: min(420px, 62vw); }
+.status .round { font-size: 15px; opacity: 0.7; }
+.status .turn { font-size: 24px; line-height: 1.1; color: var(--pc); display: flex; align-items: center; gap: 8px; }
+.status .sub { font-size: 15px; opacity: 0.75; margin-top: 2px; }
+.chip {
+  width: 16px; height: 16px; flex: none; background: var(--pc);
+  border: 2px solid var(--ink); border-radius: 50% 45% 55% 48%;
+}
+.top-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.icon-btn { width: 44px; height: 44px; font-size: 22px; line-height: 1; padding: 0; }
+.icon-btn:hover { transform: rotate(-4deg); }
+
+.banner {
+  position: absolute; top: 22%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.9) rotate(-2deg);
+  font-size: clamp(30px, 6vw, 56px); white-space: nowrap;
+  text-shadow: 3px 3px 0 var(--paper), -2px -2px 0 var(--paper), 2px -2px 0 var(--paper), -2px 2px 0 var(--paper);
+  opacity: 0; transition: opacity 0.25s, transform 0.35s cubic-bezier(.3,1.6,.5,1);
+}
+.banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-2deg); }
+
+.hud-bottom {
+  position: absolute; left: 0; right: 0; bottom: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 8px;
+}
+.hint {
+  font-size: 18px; text-align: center; max-width: 640px;
+  background: rgba(253, 251, 244, 0.85); padding: 2px 12px; border-radius: 10px;
+}
+.hint.shake { animation: shake 0.4s; color: #b8321f; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-6px) rotate(-1deg); }
+  40%, 80% { transform: translateX(6px) rotate(1deg); }
+}
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; transition: opacity 0.2s; }
+.toolbar.busy { opacity: 0.55; }
+.toolbar.busy .tool { pointer-events: none; }
+.tool {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 74px; height: 66px; padding: 4px 10px 2px; font-size: 18px; gap: 0;
+  transition: transform 0.12s;
+}
+.tool svg { width: 28px; height: 28px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tool kbd { position: absolute; top: 2px; right: 6px; font-family: inherit; font-size: 12px; opacity: 0.45; }
+.tool:hover { transform: translateY(-2px) rotate(-1.5deg); }
+.tool.active {
+  background: color-mix(in srgb, var(--pc) 22%, var(--paper));
+  border-color: var(--pc); border-width: 3.5px; transform: translateY(-4px) rotate(-1deg);
+}
+.tool.active svg { stroke: var(--pc); }
+.tool-skip.active { animation: pulse 0.9s infinite; }
+@keyframes pulse { 50% { transform: translateY(-4px) scale(1.05); } }
+.tool.rotate { display: none; min-width: 52px; font-size: 26px; }
+.tool.rotate.visible { display: flex; }
+
+@media (max-width: 560px) {
+  .tool { min-width: 58px; height: 58px; font-size: 15px; padding: 2px 4px; }
+  .tool svg { width: 24px; height: 24px; }
+  .tool kbd { display: none; }
+  .hint { font-size: 15px; }
+  .status .turn { font-size: 19px; }
+  .status .sub { font-size: 13px; }
+  .icon-btn { width: 40px; height: 40px; font-size: 20px; }
+}
+
+.fatal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-1deg);
+  max-width: min(480px, 90vw); padding: 20px 24px; font-size: 22px; text-align: center;
+}

@@ -148,6 +148,9 @@ fn fs(i: VOut) -> FOut {
     }
   } else {
     col = bridgeColor(i, up, seed);
+    if ((flags & F_GHOST) == 0u && i.tint.a > 0.0) {
+      col = mix(col, i.tint.rgb, i.tint.a * 0.55);
+    }
     if ((flags & F_GHOST) != 0u) {
       let px = vec2u(i.clip.xy / max(g.camUp.w * 1.5, 1.0));
       if (((px.x + px.y) & 1u) == 0u) {
