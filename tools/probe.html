@@ -1,0 +1,15 @@
+<!doctype html><html><body style="margin:0"><canvas id="c" width="400" height="300"></canvas>
+<script type="module">
+const a = await navigator.gpu.requestAdapter();
+const d = await a.requestDevice();
+const ctx = document.getElementById('c').getContext('webgpu');
+ctx.configure({ device: d, format: navigator.gpu.getPreferredCanvasFormat(), alphaMode: 'opaque' });
+function frame() {
+  const enc = d.createCommandEncoder();
+  const p = enc.beginRenderPass({ colorAttachments: [{ view: ctx.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store', clearValue: [1, 0, 0, 1] }] });
+  p.end();
+  d.queue.submit([enc.finish()]);
+  requestAnimationFrame(frame);
+}
+frame();
+</script></body></html>
