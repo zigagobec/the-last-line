@@ -19,6 +19,7 @@ declare global {
       snap: (dir: 1 | -1) => void;
       load: (state: GameState) => void;
       camYaw: () => number;
+      camSettled: () => boolean;
       botAction: (level?: 'random' | 'greedy') => Action | null;
     };
   }
@@ -91,6 +92,7 @@ async function boot() {
     clickPointFor: (p) => app.clickPointFor(p),
     snap: (dir) => app.cam.snap(dir),
     camYaw: () => app.cam.yaw,
+    camSettled: () => app.cam.settled(),
     load: (state) => {
       menu.close();
       app.load(state);

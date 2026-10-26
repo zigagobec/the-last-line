@@ -40,7 +40,11 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 }
 .status { padding: 6px 14px 8px; transform: rotate(-0.6deg); max-width: min(420px, 62vw); }
 .status .round { font-size: 15px; opacity: 0.7; }
-.status .turn { font-size: 24px; line-height: 1.1; color: var(--pc); display: flex; align-items: center; gap: 8px; }
+.status .turn {
+  font-size: 24px; line-height: 1.1; color: var(--pc); display: flex; align-items: center; gap: 8px;
+  /* one line for both rats, so the card (and the board fitted under it) never changes height between turns */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .status .sub { font-size: 15px; opacity: 0.75; margin-top: 2px; }
 .chip {
   width: 16px; height: 16px; flex: none; background: var(--pc);
@@ -100,7 +104,8 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   .tool kbd { display: none; }
   .hint { font-size: 15px; }
   .status .turn { font-size: 19px; }
-  .status .sub { font-size: 13px; }
+  .status { max-width: calc(100vw - 112px); }
+  .status .sub { font-size: 13px; min-height: 2.6em; }
   .icon-btn { width: 40px; height: 40px; font-size: 20px; }
 }
 
@@ -167,7 +172,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .win-name { font-size: 26px; }
 .win-line { font-size: 20px; opacity: 0.8; margin-top: 4px; }
 .win-meta { font-size: 14px; opacity: 0.5; margin-top: 6px; }
-.status .sub.danger { color: #c4321c; opacity: 1; font-size: 17px; animation: shake 0.5s 2; }
+.status .sub.danger { color: #c4321c; opacity: 1; animation: shake 0.5s 2; }
 
 /* Narrow phones: keep all five tools on one row. */
 @media (max-width: 380px) {
@@ -175,6 +180,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
   .tool { min-width: 54px; height: 54px; font-size: 13px; padding: 2px; }
   .tool svg { width: 22px; height: 22px; }
   .hud-top { top: 8px; left: 8px; right: 8px; }
+  .status .turn { font-size: 17px; }
   .status { padding: 4px 10px 6px; }
 }
 

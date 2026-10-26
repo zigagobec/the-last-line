@@ -19,6 +19,7 @@ const idle = () => page.waitForFunction(() => !window.__game.busy(), null, { tim
 const state = () => page.evaluate(() => window.__game.state());
 const cell = (s, x, y) => s.cells[y * s.rules.size + x];
 async function clickTile(x, y) {
+  await page.waitForFunction(() => window.__game.camSettled(), null, { timeout: 5000 }).catch(() => {});
   const pt = await page.evaluate((p) => window.__game.clickPointFor(p), { x, y });
   if (!pt) throw new Error(`tile ${x},${y} not clickable`);
   await page.mouse.move(pt.x, pt.y);

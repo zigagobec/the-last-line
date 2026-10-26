@@ -51,12 +51,13 @@ for (let g = 0; g < Number(gamesArg); g++) {
     } else {
       await pick(a.type);
       const target = a.type === 'move' ? a.to : a.at;
+      await page.waitForFunction(() => window.__game.camSettled(), null, { timeout: 5000 }).catch(() => {});
       let pt = await page.evaluate((p) => window.__game.clickPointFor(p), target);
       for (let turn = 0; !pt && turn < 3; turn++) {
         // Tile hidden behind sprites from this angle: rotate the camera like a player would.
         if (MOBILE) await page.getByRole('button', { name: 'Zavrti desno (E)' }).tap();
         else await page.keyboard.press('e');
-        await page.waitForTimeout(500);
+        await page.waitForFunction(() => window.__game.camSettled(), null, { timeout: 5000 }).catch(() => {});
         pt = await page.evaluate((p) => window.__game.clickPointFor(p), target);
       }
       if (!pt) {

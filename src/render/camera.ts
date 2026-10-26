@@ -161,6 +161,19 @@ export class OrbitCamera {
     this.shift = [this.shift[0] + (this.goalShift[0] - this.shift[0]) * k, this.shift[1] + (this.goalShift[1] - this.shift[1]) * k];
   }
 
+  /** True once easing has (visually) reached the goal view. */
+  settled(): boolean {
+    const near = (a: number, b: number, eps: number) => Math.abs(a - b) < eps;
+    return (
+      near(this.yaw, this.goal.yaw, 1e-3) &&
+      near(this.pitch, this.goal.pitch, 1e-3) &&
+      near(this.zoomLevel, this.goal.zoom, 1e-3) &&
+      near(this.base, this.goalBase, 1e-2) &&
+      near(this.shift[0], this.goalShift[0], 1e-3) &&
+      near(this.shift[1], this.goalShift[1], 1e-3)
+    );
+  }
+
   eye(): Vec3 {
     return eyeFrom(this.target, this.yaw, this.pitch, this.distance);
   }

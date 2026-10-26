@@ -33,7 +33,8 @@ for (let y = 0; y < n && !target; y++) for (let x = 0; x < n && !target; x++) {
   const occupied = s.players.some((p) => p.x === x && p.y === y);
   // Unmarked, so the end-of-round erosion can't take the new tree before we look at it.
   if (c.land && !c.tree && !c.marked && !occupied) {
-    const pt = await page.evaluate((p) => window.__game.clickPointFor(p), { x, y });
+    await page.waitForFunction(() => window.__game.camSettled(), null, { timeout: 5000 }).catch(() => {});
+  const pt = await page.evaluate((p) => window.__game.clickPointFor(p), { x, y });
     if (pt) target = { x, y, pt };
   }
 }
@@ -64,6 +65,23 @@ const afterSecond = await page.evaluate((t) => window.__game.state().cells[t.y *
 const d2 = await diag();
 const ev = await page.evaluate(() => window.__ev.join(' '));
 check('second tap on the same tile draws', afterSecond === true, afterSecond ? '' : JSON.stringify({ target, d0, d1, d2, ev }));
+// The board must not drift around between turns (HUD text changing height used to re-fit it).
+{
+  await page.evaluate(() => window.__game.start(4242));
+  const spots = new Set();
+  for (let i = 0; i < 10; i++) {
+    await page.waitForFunction(() => !window.__game.busy(), null, { timeout: 15000 });
+    await page.waitForTimeout(700);
+    const p = await page.evaluate(() => window.__game.screenOf({ x: 0, y: 0 }));
+    const info = await page.evaluate(() => { const sub = document.querySelector('.status .sub'); const cs = getComputedStyle(sub); return { sub: sub.className, text: sub.textContent, subH: Math.round(sub.getBoundingClientRect().height), fs: cs.fontSize, lh: cs.lineHeight, mh: cs.minHeight, turnH: Math.round(document.querySelector('.status .turn').getBoundingClientRect().height), h: Math.round(document.querySelector('.status').getBoundingClientRect().height) }; });
+    if (process.env.DEBUG) console.log(i, Math.round(p.x), Math.round(p.y), JSON.stringify(info));
+    spots.add(`${Math.round(p.x / 3)},${Math.round(p.y / 3)}`);
+    const st = await page.evaluate(() => window.__game.state());
+    if (st.over) break;
+    await page.evaluate(() => window.__game.dispatch(window.__game.botAction()));
+  }
+  check('board stays put between turns', spots.size === 1, [...spots].join(' '));
+}
 check('no console errors', errors.length === 0, errors.join(' | '));
 console.log(results.join('\n'));
 await browser.close();

@@ -40,6 +40,8 @@ export class Hud {
   private rotate: HTMLButtonElement;
   private bannerTimer = 0;
   private status: HTMLElement;
+  /** Tallest top HUD seen at this window size: the board only ever moves away from it, never back and forth. */
+  private topMax = { key: '', px: 0 };
   private topButtons: HTMLElement;
   private toolKey = '';
   private hintUntil = 0;
@@ -91,7 +93,11 @@ export class Hud {
     const h = window.innerHeight;
     if (this.root.classList.contains('hidden') || h <= 0) return { left: -0.92, right: 0.92, bottom: -0.8, top: 0.8 };
     const ndcY = (px: number) => 1 - (2 * px) / h;
-    const top = Math.max(this.status.getBoundingClientRect().bottom, this.topButtons.getBoundingClientRect().bottom);
+    const sizeKey = `${window.innerWidth}x${h}`;
+    if (this.topMax.key !== sizeKey) this.topMax = { key: sizeKey, px: 0 };
+    const measured = Math.max(this.status.getBoundingClientRect().bottom, this.topButtons.getBoundingClientRect().bottom);
+    this.topMax.px = Math.max(this.topMax.px, measured);
+    const top = this.topMax.px;
     let bottom = this.toolbar.getBoundingClientRect().top;
     if (getComputedStyle(this.hint).display !== 'none') {
       // Reserve two hint lines so switching tools (shorter or longer hints) doesn't re-zoom the board.
