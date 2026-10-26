@@ -293,7 +293,6 @@ export class Renderer {
     this.resize();
     const t = this.targets!;
     const { device, context } = this.gpu;
-    cam.fit(this.aspect);
     this.writeGlobals(cam, view.time);
     const tiles = this.writeTiles(view);
     const sprites = this.writeSprites(view, cam);

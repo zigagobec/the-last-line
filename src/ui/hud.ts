@@ -1,4 +1,5 @@
 import type { GameState, PlayerId } from '../game';
+import type { FitBox } from '../render/camera';
 import { PLAYER_CSS } from '../view/colors';
 import { T, TOOL_HINT, TOOL_LABEL, type Tool } from './strings';
 
@@ -38,6 +39,8 @@ export class Hud {
   private buttons = new Map<Tool, HTMLButtonElement>();
   private rotate: HTMLButtonElement;
   private bannerTimer = 0;
+  private status: HTMLElement;
+  private topButtons: HTMLElement;
   private toolKey = '';
   private hintUntil = 0;
 
@@ -45,10 +48,12 @@ export class Hud {
     this.root = el('div', 'hud hidden', parent);
     const top = el('div', 'hud-top', this.root);
     const status = el('div', 'status paper', top);
+    this.status = status;
     this.round = el('div', 'round', status);
     this.turn = el('div', 'turn', status);
     this.sub = el('div', 'sub', status);
     const btns = el('div', 'top-buttons', top);
+    this.topButtons = btns;
     const iconBtn = (label: string, title: string, fn: () => void) => {
       const b = el('button', 'icon-btn paper', btns, label);
       b.title = title;
@@ -79,6 +84,22 @@ export class Hud {
     this.rotate = el('button', 'tool paper rotate', this.toolbar, '<span>⇄</span><kbd>R</kbd>');
     this.rotate.title = T.rotateBridge;
     this.rotate.addEventListener('click', () => h.onRotateBridge());
+  }
+
+  /** Screen area (NDC) left free between the top HUD and the toolbar, for fitting the board. */
+  freeBox(): FitBox {
+    const h = window.innerHeight;
+    if (this.root.classList.contains('hidden') || h <= 0) return { left: -0.92, right: 0.92, bottom: -0.8, top: 0.8 };
+    const ndcY = (px: number) => 1 - (2 * px) / h;
+    const top = Math.max(this.status.getBoundingClientRect().bottom, this.topButtons.getBoundingClientRect().bottom);
+    let bottom = this.toolbar.getBoundingClientRect().top;
+    if (getComputedStyle(this.hint).display !== 'none') {
+      // Reserve two hint lines so switching tools (shorter or longer hints) doesn't re-zoom the board.
+      const line = parseFloat(getComputedStyle(this.hint).lineHeight) || 22;
+      bottom -= 2 * line + 10;
+    }
+    const snap = (px: number) => Math.round(px / 4) * 4;
+    return { left: -0.95, right: 0.95, top: ndcY(snap(top) + 6), bottom: ndcY(snap(bottom) - 6) };
   }
 
   show(visible: boolean): void {

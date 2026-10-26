@@ -318,6 +318,7 @@ export class App {
       const view = buildSceneView(s, now / 1000);
       session.animator.apply(view);
       if (!busy && !s.over && !this.paused) this.decorate(view, s);
+      this.cam.fit(this.renderer.aspect, this.hud.freeBox());
       fadeOccluders(view, this.cam.viewProj(this.renderer.aspect), this.cam.view(), this.cam.eye(), this.aspects());
       this.lastView = view;
       this.renderer.render(view, this.cam);

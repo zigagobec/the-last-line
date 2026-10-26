@@ -230,3 +230,13 @@ polj (svojih minus nasprotnikovih). Rezultati veljajo za 300 iger na 8×8.
   Vse derivacije se izračunajo na začetku fragment shaderja.
 - **Obrazložitev:** podpora te direktive v Safariju (iPhone) in Firefoxu ni
   zanesljiva. Če je ne bi bilo, bi se igra na teh napravah sploh ne izrisala.
+
+### C16. Postavitev na majhnih in ležečih zaslonih
+- **Odločitev:** prostor za ploščo se izmeri iz dejanskih elementov HUD-a, ne
+  iz fiksnih odstotkov. Na ozkih telefonih (≤ 380 px) je orodna vrstica bolj
+  kompaktna, da ostane v eni vrsti. Na nizkih ležečih zaslonih se skrijeta
+  namig in podrobnosti kroga, ostane samo »Na potezi«. Opozorilo za nevarno
+  polje ostane vidno.
+- **Obrazložitev:** na telefonu, obrnjenem na bok, je plošča prej zlezla pod
+  orodno vrstico, na majhnem telefonu pa se je orodna vrstica razlomila v dve
+  vrstici.

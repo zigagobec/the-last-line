@@ -53,8 +53,11 @@ export class OrbitCamera {
   /** Zoom multiplier on top of the fitted base distance. */
   zoomLevel = 1;
   private base: number;
+  private goalBase: number;
   /** NDC offset applied after projection, centring the board in the free screen area. */
   private shift: [number, number] = [0, 0];
+  private goalShift: [number, number] = [0, 0];
+  private fitted = false;
   private fitKey = '';
   private userRotated = false;
   target: Vec3 = [0, -0.225, 0];
@@ -63,6 +66,7 @@ export class OrbitCamera {
 
   constructor(private size: number) {
     this.base = size * 2.6;
+    this.goalBase = this.base;
     this.goal = { yaw: this.yaw, pitch: this.pitch, zoom: 1 };
   }
 
@@ -76,6 +80,7 @@ export class OrbitCamera {
     this.goal.zoom = 1;
     this.userRotated = false;
     this.fitKey = '';
+    this.fitted = false;
   }
 
   /**
@@ -83,7 +88,8 @@ export class OrbitCamera {
    * Computed for the default yaw, so turning the board never changes the zoom.
    */
   fit(aspect: number, box: FitBox = DEFAULT_FIT): void {
-    const key = `${aspect.toFixed(4)}:${this.size}:${box.left},${box.right},${box.bottom},${box.top}`;
+    const q = (v: number) => v.toFixed(3);
+    const key = `${aspect.toFixed(4)}:${this.size}:${q(box.left)},${q(box.right)},${q(box.bottom)},${q(box.top)}`;
     if (key === this.fitKey) return;
     this.fitKey = key;
     const yaw = defaultYaw(aspect);
@@ -118,8 +124,14 @@ export class OrbitCamera {
       else lo = mid;
     }
     const e = extent(hi);
-    this.base = hi;
-    this.shift = [(box.left + box.right) / 2 - (e.x0 + e.x1) / 2, (box.bottom + box.top) / 2 - (e.y0 + e.y1) / 2];
+    this.goalBase = hi;
+    this.goalShift = [(box.left + box.right) / 2 - (e.x0 + e.x1) / 2, (box.bottom + box.top) / 2 - (e.y0 + e.y1) / 2];
+    if (!this.fitted) {
+      // First fit for this board: jump straight there; later refits (HUD or window changes) glide.
+      this.base = this.goalBase;
+      this.shift = [...this.goalShift];
+      this.fitted = true;
+    }
   }
 
   orbit(dYaw: number, dPitch: number): void {
@@ -145,6 +157,8 @@ export class OrbitCamera {
     this.yaw += (this.goal.yaw - this.yaw) * k;
     this.pitch += (this.goal.pitch - this.pitch) * k;
     this.zoomLevel += (this.goal.zoom - this.zoomLevel) * k;
+    this.base += (this.goalBase - this.base) * k;
+    this.shift = [this.shift[0] + (this.goalShift[0] - this.shift[0]) * k, this.shift[1] + (this.goalShift[1] - this.shift[1]) * k];
   }
 
   eye(): Vec3 {
