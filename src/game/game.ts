@@ -13,40 +13,39 @@ export function markRound(s: GameState): Pos[] {
   return marks;
 }
 
-export function applyAction(prev: GameState, a: Action): { state: GameState; events: GameEvent[] } {
-  if (!isLegal(prev, a)) throw new Error('Illegal action');
-  const s = cloneState(prev);
+/** Apply the acting player's action effect to `s` in place, without turn flow or erosion. */
+export function performAction(s: GameState, a: Action): GameEvent {
   const player = s.current;
-  const events: GameEvent[] = [];
-
   switch (a.type) {
     case 'move': {
       const from = s.players[player];
-      const viaBridge = moveTargets(prev).find((t) => t.to.x === a.to.x && t.to.y === a.to.y)!.viaBridge;
+      const viaBridge = moveTargets(s).find((t) => t.to.x === a.to.x && t.to.y === a.to.y)!.viaBridge;
       s.players[player] = { ...a.to };
-      events.push({ type: 'move', player, from, to: { ...a.to }, viaBridge });
-      break;
+      return { type: 'move', player, from, to: { ...a.to }, viaBridge };
     }
     case 'tree':
       cell(s, a.at).tree = true;
-      events.push({ type: 'tree', player, at: { ...a.at } });
-      break;
+      return { type: 'tree', player, at: { ...a.at } };
     case 'bridge':
       cell(s, a.at).bridge = a.dir;
-      events.push({ type: 'bridge', player, at: { ...a.at }, dir: a.dir });
-      break;
+      return { type: 'bridge', player, at: { ...a.at }, dir: a.dir };
     case 'erase': {
       const c = cell(s, a.at);
       const what = c.tree ? 'tree' : 'bridge';
       if (c.tree) c.tree = false;
       else c.bridge = null;
-      events.push({ type: 'erase', player, at: { ...a.at }, what });
-      break;
+      return { type: 'erase', player, at: { ...a.at }, what };
     }
     case 'skip':
-      events.push({ type: 'skip', player });
-      break;
+      return { type: 'skip', player };
   }
+}
+
+export function applyAction(prev: GameState, a: Action): { state: GameState; events: GameEvent[] } {
+  if (!isLegal(prev, a)) throw new Error('Illegal action');
+  const s = cloneState(prev);
+  const player = s.current;
+  const events: GameEvent[] = [performAction(s, a)];
 
   s.acted += 1;
   if (s.acted < 2) {
