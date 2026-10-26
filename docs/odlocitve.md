@@ -217,3 +217,16 @@ polj (svojih minus nasprotnikovih). Rezultati veljajo za 300 iger na 8×8.
   (drevo, tabla). Sam PDF z vašim dizajnom ostane lokalno.
 - **Obrazložitev:** objaviti si me prosil igro, za objavo celotnega dokumenta
   nisem imel dovoljenja.
+
+### C14. Dotik: risanje v dveh tapih
+- **Odločitev:** na telefonu prvi tap z orodjem Drevo, Most ali Radirka pokaže
+  predogled. Drugi tap na isto polje potezo izvede. Premik gre še vedno z enim
+  tapom, ker so dovoljena polja že obarvana.
+- **Obrazložitev:** na zaslonu na dotik ni prehoda z miško, zato brez tega ne bi
+  bilo predogleda in bi vsak nenamerni dotik takoj narisal drevo.
+
+### C15. Združljivost shaderjev
+- **Odločitev:** shaderji ne uporabljajo direktive `diagnostic(off, …)`.
+  Vse derivacije se izračunajo na začetku fragment shaderja.
+- **Obrazložitev:** podpora te direktive v Safariju (iPhone) in Firefoxu ni
+  zanesljiva. Če je ne bi bilo, bi se igra na teh napravah sploh ne izrisala.

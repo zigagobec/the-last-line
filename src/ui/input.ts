@@ -3,7 +3,8 @@ import type { OrbitCamera } from '../render/camera';
 export interface PointerHandlers {
   /** Pointer position in normalised device coordinates, or null when it left the canvas. */
   onHover(ndc: [number, number] | null): void;
-  onClick(ndc: [number, number]): void;
+  /** `touch` = no hover preview was possible before this click. */
+  onClick(ndc: [number, number], touch: boolean): void;
 }
 
 const DRAG_THRESHOLD = 6;
@@ -78,13 +79,11 @@ export class PointerInput {
     if (!p) return;
     if (!this.dragging && e.button === 0) {
       const ndc = this.ndc(e);
+      // On touch the last tap stays the "hover" so its preview remains visible until confirmed.
       this.h.onHover(ndc);
-      this.h.onClick(ndc);
+      this.h.onClick(ndc, e.pointerType !== 'mouse');
     }
-    if (this.pointers.size === 0) {
-      this.dragging = false;
-      if (e.pointerType !== 'mouse') this.h.onHover(null);
-    }
+    if (this.pointers.size === 0) this.dragging = false;
   };
 
   private cancel = (e: PointerEvent) => {

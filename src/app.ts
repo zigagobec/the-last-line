@@ -47,6 +47,8 @@ export class App {
   readonly cam: OrbitCamera;
   private tool: Tool = 'move';
   private aspectCache: Partial<Record<SpriteName, number>> | null = null;
+  /** Touch: the drawing action previewed by the first tap, confirmed by a second tap on the same tile. */
+  private pendingTap: string | null = null;
   private bridgeDir: BridgeDir = 'H';
   private pointer: [number, number] | null = null;
   private hud: Hud;
@@ -72,7 +74,7 @@ export class App {
     });
     new PointerInput(canvas, this.cam, {
       onHover: (ndc) => (this.pointer = ndc),
-      onClick: (ndc) => this.click(ndc),
+      onClick: (ndc, touch) => this.click(ndc, touch),
     });
     window.addEventListener('keydown', (e) => this.key(e));
     requestAnimationFrame(this.frame);
@@ -156,6 +158,7 @@ export class App {
       return;
     }
     this.tool = t;
+    this.pendingTap = null;
     this.hud.setTool(t, false);
   }
 
@@ -223,12 +226,22 @@ export class App {
     }
   }
 
-  private click(ndc: [number, number]): void {
+  private click(ndc: [number, number], touch: boolean): void {
     const s = this.state;
     if (!s || this.paused || s.over || this.session!.animator.busy()) return;
     const target = this.targetAt(ndc);
     if (!target) return;
     const a = this.actionAt(s, target.p);
+    if (a && touch && this.tool !== 'move') {
+      // No hover on touch screens: the first tap shows the preview, the second confirms it.
+      const key = `${this.tool}:${target.p.x},${target.p.y}:${this.bridgeDir}`;
+      if (this.pendingTap !== key) {
+        this.pendingTap = key;
+        this.hud.flashHint(T.confirmTap, false);
+        return;
+      }
+    }
+    this.pendingTap = null;
     if (a) this.dispatch(a);
     else if (target.key === `rat${s.current}`) this.selectTool('move');
     else this.hud.flashHint(T.denied);

@@ -112,10 +112,11 @@ export class Hud {
     this.toolbar.classList.toggle('busy', busy);
   }
 
-  flashHint(text: string): void {
-    this.hintUntil = performance.now() + 1500;
+  flashHint(text: string, shake = true): void {
+    this.hintUntil = performance.now() + 1800;
     this.hint.textContent = text;
     this.hint.classList.remove('shake');
+    if (!shake) return;
     void this.hint.offsetWidth;
     this.hint.classList.add('shake');
   }

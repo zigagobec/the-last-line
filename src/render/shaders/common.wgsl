@@ -1,5 +1,3 @@
-diagnostic(off, derivative_uniformity);
-
 struct Globals {
   viewProj: mat4x4f,
   camPos: vec4f,   // xyz eye, w time (s)
@@ -30,15 +28,18 @@ fn noise2(p: vec2f) -> f32 {
   );
 }
 
-/** Anti-aliased stripes: 1 where fract(x) < fill. */
-fn stripes(x: f32, fill: f32) -> f32 {
-  let w = max(fwidth(x), 1e-4);
+/**
+ * Anti-aliased stripes: 1 where fract(x) < fill. `dx` is x's change per pixel; callers derive it from
+ * derivatives taken at the top of the fragment shader, so no derivative runs in non-uniform control flow.
+ */
+fn stripes(x: f32, fill: f32, dx: f32) -> f32 {
+  let w = max(dx, 1e-4);
   let f = fract(x);
   return clamp((fill - f) / w + 0.5, 0.0, 1.0) * clamp(f / w + 0.5, 0.0, 1.0);
 }
 
-/** Anti-aliased line of ~`px` device pixels where `d` (any unit) crosses zero. */
-fn lineMask(d: f32, px: f32) -> f32 {
-  let w = max(fwidth(d), 1e-5);
+/** Anti-aliased line of ~`px` device pixels where `d` crosses zero; `dd` is d's change per pixel. */
+fn lineMask(d: f32, px: f32, dd: f32) -> f32 {
+  let w = max(dd, 1e-5);
   return 1.0 - smoothstep(px * 0.5 * w, (px * 0.5 + 1.0) * w, abs(d));
 }

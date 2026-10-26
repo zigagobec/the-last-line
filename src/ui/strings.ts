@@ -32,6 +32,7 @@ export const T = {
       : `${n} ${n === 1 ? 'polje bo izginilo' : n === 2 ? 'polji bosta izginili' : n <= 4 ? 'polja bodo izginila' : 'polj bo izginilo'} ob koncu kroga`,
   actsLeft: (left: number) => (left === 2 ? 'Oba igralca še na potezi' : 'Še zadnja poteza pred erozijo'),
   denied: 'Tja ne gre.',
+  confirmTap: 'Tapni še enkrat za potrditev.',
   danger: 'Pozor: stojiš na polju, ki bo izginilo!',
   rotateBridge: 'Obrni most (R)',
   camLeft: 'Zavrti levo (Q)',

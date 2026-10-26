@@ -15,10 +15,15 @@ const page = await browser.newPage(
     : { viewport: { width: Number(w), height: Number(h) } },
 );
 const pick = async (tool) => {
-  if (MOBILE) await page.locator(`.tool-${tool}`).tap();
+  // The armed skip button pulses on purpose, which Playwright reads as 'not stable'.
+  if (MOBILE) await page.locator(`.tool-${tool}`).tap({ force: true });
   else await page.keyboard.press(TOOL_KEY[tool]);
 };
 const errors = [];
+if (process.env.RULES) {
+  const rules = process.env.RULES;
+  await page.addInitScript((r) => localStorage.setItem('the-last-line/rules', r), rules);
+}
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 await page.goto(url);
@@ -58,8 +63,14 @@ for (let g = 0; g < Number(gamesArg); g++) {
         errors.push(`game ${g} step ${steps}: tile ${JSON.stringify(target)} not clickable from any angle`);
         pt = await page.evaluate((p) => window.__game.screenOf(p), target);
       }
-      if (MOBILE) await page.touchscreen.tap(pt.x, pt.y);
-      else {
+      if (MOBILE) {
+        await page.touchscreen.tap(pt.x, pt.y);
+        // Drawing actions preview on the first tap and apply on the second.
+        if (a.type !== 'move') {
+          await page.waitForTimeout(60);
+          await page.touchscreen.tap(pt.x, pt.y);
+        }
+      } else {
         await page.mouse.move(pt.x, pt.y);
         await page.waitForTimeout(30);
         await page.mouse.click(pt.x, pt.y);
