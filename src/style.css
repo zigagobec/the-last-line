@@ -167,3 +167,4 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .win-name { font-size: 26px; }
 .win-line { font-size: 20px; opacity: 0.8; margin-top: 4px; }
 .win-meta { font-size: 14px; opacity: 0.5; margin-top: 6px; }
+.status .sub.danger { color: #c4321c; opacity: 1; font-size: 17px; animation: shake 0.5s 2; }

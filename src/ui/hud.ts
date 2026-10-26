@@ -90,7 +90,10 @@ export class Hud {
     this.round.textContent = T.round(s.round);
     this.turn.innerHTML = `<span class="chip"></span>${T.turn(s.current)}`;
     const marks = s.cells.filter((c) => c.marked).length;
-    this.sub.textContent = `${T.marked(marks)} · ${T.actsLeft(2 - s.acted)}`;
+    const me = s.players[s.current];
+    const inDanger = s.cells[me.y * s.rules.size + me.x].marked;
+    this.sub.textContent = inDanger ? T.danger : `${T.marked(marks)} · ${T.actsLeft(2 - s.acted)}`;
+    this.sub.classList.toggle('danger', inDanger);
   }
 
   setTool(tool: Tool, rotatable: boolean): void {

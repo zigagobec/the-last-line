@@ -1,5 +1,5 @@
 import { allPositions, cell, type BridgeDir, type GameState, type PlayerId, type Pos } from '../game';
-import type { Vec3, Vec4 } from '../render/math';
+import { mat4, vec3, type Mat4, type Vec3, type Vec4 } from '../render/math';
 import { tileCenter } from '../render/camera';
 
 export const TILE_MARKED = 1;
@@ -113,4 +113,33 @@ export function signSprite(size: number, p: Pos): SpriteView {
 
 export function ratSprite(size: number, id: PlayerId, p: Pos): SpriteView {
   return sprite(`rat${id}`, id === 0 ? 'rat0' : 'rat1', tileCenter(size, p), RAT_HEIGHT, id === 1);
+}
+
+/** Screen-space (NDC) rectangle of an upright billboard; `shrink` trims transparent margins. */
+function spriteRect(sp: SpriteView, aspect: number, vp: Mat4, right: Vec3, up: Vec3, shrink = 1) {
+  const w = sp.height * aspect * shrink;
+  const project = (p: Vec3) => {
+    const c = mat4.transform(vp, [p[0], p[1], p[2], 1]);
+    return [c[0] / c[3], c[1] / c[3]];
+  };
+  const bl = project(vec3.add(sp.pos, vec3.scale(right, -w / 2)));
+  const tr = project(vec3.add(vec3.add(sp.pos, vec3.scale(right, w / 2)), vec3.scale(up, sp.height * shrink)));
+  return { x0: bl[0], y0: bl[1], x1: tr[0], y1: tr[1] };
+}
+
+/** Fade trees that stand between the camera and a rat, so a rat is never lost behind foliage. */
+export function fadeOccluders(view: SceneView, vp: Mat4, viewM: Mat4, eye: Vec3, aspects: Partial<Record<SpriteName, number>>): void {
+  const right: Vec3 = [viewM[0], viewM[4], viewM[8]];
+  const up: Vec3 = [viewM[1], viewM[5], viewM[9]];
+  const dist = (p: Vec3) => vec3.dot(vec3.sub(p, eye), vec3.sub(p, eye));
+  const rats = view.sprites.filter((sp) => (sp.name === 'rat0' || sp.name === 'rat1') && sp.alpha > 0.2);
+  for (const rat of rats) {
+    const r = spriteRect(rat, aspects[rat.name] ?? 1, vp, right, up, 0.8);
+    for (const tree of view.sprites) {
+      if (tree.name !== 'tree' || dist(tree.pos) >= dist(rat.pos)) continue;
+      const t = spriteRect(tree, aspects.tree ?? 1, vp, right, up, 0.75);
+      const overlap = t.x0 < r.x1 && t.x1 > r.x0 && t.y0 < r.y1 && t.y1 > r.y0;
+      if (overlap) tree.alpha = Math.min(tree.alpha, 0.38);
+    }
+  }
 }

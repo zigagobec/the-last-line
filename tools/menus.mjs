@@ -23,7 +23,11 @@ const check = (name, ok, extra = '') => results.push(`${ok ? 'PASS' : 'FAIL'} ${
   await page.screenshot({ path: `${outDir}/help.png` });
   await page.getByRole('button', { name: 'Razumem' }).click();
   await page.getByRole('button', { name: 'Igraj' }).click();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(800);
+  const yaw0 = await page.evaluate(() => window.__game.camYaw());
+  await page.waitForTimeout(1000);
+  const yaw1 = await page.evaluate(() => window.__game.camYaw());
+  check('board stops spinning once the game starts', Math.abs(yaw1 - yaw0) < 1e-3, `${yaw0} → ${yaw1}`);
   const rules = await page.evaluate(() => window.__game.state().rules);
   check('rules panel applies size', rules.size === 6, JSON.stringify(rules));
   check('rules panel applies range', rules.range === 2);

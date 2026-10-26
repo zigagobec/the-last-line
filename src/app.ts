@@ -23,12 +23,14 @@ import { T, type Tool } from './ui/strings';
 import { PLAYER_TINT } from './view/colors';
 import {
   buildSceneView,
+  fadeOccluders,
   posKey,
   TILE_DENIED,
   TILE_HIGHLIGHT,
   TILE_HOVER,
   treeSprite,
   type SceneView,
+  type SpriteName,
 } from './view/scene';
 import { Session } from './view/session';
 
@@ -44,6 +46,7 @@ export class App {
   session: Session | null = null;
   readonly cam: OrbitCamera;
   private tool: Tool = 'move';
+  private aspectCache: Partial<Record<SpriteName, number>> | null = null;
   private bridgeDir: BridgeDir = 'H';
   private pointer: [number, number] | null = null;
   private hud: Hud;
@@ -80,13 +83,27 @@ export class App {
   }
 
   start(rules: Rules, seed: number): void {
-    this.session = new Session(createGame(rules, seed));
-    this.cam.resetFor(rules.size);
+    this.load(createGame(rules, seed));
+  }
+
+  /** Play from an arbitrary state (new games and scripted test scenarios). */
+  load(state: GameState): void {
+    this.session = new Session(state);
+    this.cam.resetFor(state.rules.size);
     this.shownTurn = '';
     this.overShown = false;
     this.tool = 'move';
     this.hud.show(true);
     this.paused = false;
+    this.attract = false;
+  }
+
+  private aspects(): Partial<Record<SpriteName, number>> {
+    if (!this.aspectCache) {
+      this.aspectCache = {};
+      for (const [name, f] of Object.entries(this.renderer.atlas.frames)) this.aspectCache[name as SpriteName] = f.aspect;
+    }
+    return this.aspectCache;
   }
 
   /** Hide the HUD and freeze input while a menu is open; `attract` slowly spins the board behind the title screen. */
@@ -310,7 +327,7 @@ export class App {
   private frame = (now: number): void => {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
-    if (this.attract) this.cam.orbit(dt * 0.12, 0);
+    if (this.attract && this.paused) this.cam.orbit(dt * 0.12, 0);
     this.cam.update(dt);
     const session = this.session;
     if (session) {
@@ -320,6 +337,7 @@ export class App {
       const view = buildSceneView(s, now / 1000);
       session.animator.apply(view);
       if (!busy && !s.over && !this.paused) this.decorate(view, s);
+      fadeOccluders(view, this.cam.viewProj(this.renderer.aspect), this.cam.view(), this.cam.eye(), this.aspects());
       this.lastView = view;
       this.renderer.render(view, this.cam);
 

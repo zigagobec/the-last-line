@@ -1,5 +1,5 @@
 import { App } from './app';
-import { Rng, type Action, type Pos } from './game';
+import { Rng, type Action, type GameState, type Pos } from './game';
 import { chooseAction } from './sim/bot';
 import { buildAtlas } from './render/atlas';
 import { initGpu } from './render/gpu';
@@ -17,6 +17,8 @@ declare global {
       screenOf: (p: Pos) => { x: number; y: number };
       clickPointFor: (p: Pos) => { x: number; y: number } | null;
       snap: (dir: 1 | -1) => void;
+      load: (state: GameState) => void;
+      camYaw: () => number;
       botAction: (level?: 'random' | 'greedy') => Action | null;
     };
   }
@@ -89,6 +91,11 @@ async function boot() {
     screenOf: (p) => app.screenOf(p),
     clickPointFor: (p) => app.clickPointFor(p),
     snap: (dir) => app.cam.snap(dir),
+    camYaw: () => app.cam.yaw,
+    load: (state) => {
+      menu.close();
+      app.load(state);
+    },
     botAction: (level = 'greedy') => (app.state ? chooseAction(app.state, botRng, level) : null),
   };
 }
