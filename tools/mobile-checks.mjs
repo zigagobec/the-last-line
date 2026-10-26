@@ -31,21 +31,39 @@ let target = null;
 for (let y = 0; y < n && !target; y++) for (let x = 0; x < n && !target; x++) {
   const c = s.cells[y * n + x];
   const occupied = s.players.some((p) => p.x === x && p.y === y);
-  if (c.land && !c.tree && !occupied) {
+  // Unmarked, so the end-of-round erosion can't take the new tree before we look at it.
+  if (c.land && !c.tree && !c.marked && !occupied) {
     const pt = await page.evaluate((p) => window.__game.clickPointFor(p), { x, y });
     if (pt) target = { x, y, pt };
   }
 }
 const actedBefore = await acted();
+const diag = async () => page.evaluate(() => ({
+  hint: document.querySelector('.hint').textContent,
+  tool: [...document.querySelectorAll('.tool.active')].map((b) => b.className).join(' '),
+  current: window.__game.state().current,
+  acted: window.__game.state().acted,
+  busy: window.__game.busy(),
+}));
+await page.evaluate(() => {
+  window.__ev = [];
+  for (const t of ['pointerdown', 'pointerup', 'pointercancel', 'lostpointercapture']) {
+    document.getElementById('gfx').addEventListener(t, (e) => window.__ev.push(`${t}:${e.pointerType}`));
+  }
+});
+const d0 = await diag();
 await page.touchscreen.tap(target.pt.x, target.pt.y);
 await page.waitForTimeout(250);
+const d1 = await diag();
 const afterFirst = await page.evaluate((t) => window.__game.state().cells[t.y * window.__game.state().rules.size + t.x].tree, target);
 check('first tap on a tile only previews', afterFirst === false && (await acted()) === actedBefore);
 await page.screenshot({ path: `${process.argv[3]}/touch-preview.png` });
 await page.touchscreen.tap(target.pt.x, target.pt.y);
 await page.waitForTimeout(250);
 const afterSecond = await page.evaluate((t) => window.__game.state().cells[t.y * window.__game.state().rules.size + t.x].tree, target);
-check('second tap on the same tile draws', afterSecond === true);
+const d2 = await diag();
+const ev = await page.evaluate(() => window.__ev.join(' '));
+check('second tap on the same tile draws', afterSecond === true, afterSecond ? '' : JSON.stringify({ target, d0, d1, d2, ev }));
 check('no console errors', errors.length === 0, errors.join(' | '));
 console.log(results.join('\n'));
 await browser.close();

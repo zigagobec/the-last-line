@@ -144,7 +144,7 @@ export class Menu {
       const r = el('div', 'row', form);
       const l = el('div', 'label', r);
       el('div', '', l, label);
-      el('div', 'help', l, help);
+      el('div', 'row-help', l, help);
       return el('div', 'control', r);
     };
     const segmented = <T,>(parent: HTMLElement, options: [T, string][], get: () => T, set: (v: T) => void) => {

@@ -148,7 +148,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .btn { font-size: 22px; padding: 8px 20px; transition: transform 0.12s; }
 .btn:hover { transform: rotate(-2deg) translateY(-2px); }
 .btn.primary { background: #2d6cdf; color: #fff; }
-.help { font-size: 14px; opacity: 0.65; }
+.row-help { font-size: 14px; opacity: 0.65; }
 .card.help, .card.settings { text-align: left; }
 .card.help h2, .card.settings h2, .card.settings .note { text-align: center; }
 .note { opacity: 0.7; font-size: 16px !important; }
