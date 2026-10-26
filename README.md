@@ -20,4 +20,7 @@ npm run build
 - `src/game/` — pure game rules (no rendering)
 - `src/render/` — WebGPU renderer: G-buffer → ink/paper composite → billboard sprites
 - `src/view/`, `src/ui/` — animation, HUD, menus, input
-- `docs/odlocitve.md` — design decisions and balance notes (Slovenian)
+- `docs/odlocitve.md` — design decisions, balance and playtest notes (Slovenian)
+- `tools/` — Playwright scripts that play the game headlessly through the real UI
+  (`play.mjs`, `scenario-ui.mjs`, `menus.mjs`, `mobile-checks.mjs`, `resize.mjs`);
+  they use `chromium-headless-shell` with SwiftShader WebGPU flags
