@@ -23,6 +23,8 @@ await page.waitForFunction(() => !window.__game.busy());
 await page.waitForTimeout(300);
 
 // Drawing a tree needs two taps on the same tile; the first shows a preview.
+// Pick the tool first: what a point targets depends on the tool (move/bridge look through trees).
+await page.locator('.tool-tree').tap({ force: true });
 const s = await page.evaluate(() => window.__game.state());
 const n = s.rules.size;
 let target = null;
@@ -34,7 +36,6 @@ for (let y = 0; y < n && !target; y++) for (let x = 0; x < n && !target; x++) {
     if (pt) target = { x, y, pt };
   }
 }
-await page.locator('.tool-tree').tap({ force: true });
 const actedBefore = await acted();
 await page.touchscreen.tap(target.pt.x, target.pt.y);
 await page.waitForTimeout(250);
