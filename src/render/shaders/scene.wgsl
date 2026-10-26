@@ -63,8 +63,8 @@ fn tileTop(i: VOut, flags: u32, seed: f32) -> vec3f {
   let d = i.params.y;
   if (d >= 0.0) {
     let rect = decals[u32(d)];
-    let c = vec2f(0.3 + seed * 0.4, 0.28 + fract(seed * 7.13) * 0.44);
-    let duv = (uv - c) / 0.36 + 0.5;
+    let c = vec2f(0.32 + seed * 0.36, 0.3 + fract(seed * 7.13) * 0.4);
+    let duv = (uv - c) / 0.5 + 0.5;
     if (all(duv >= vec2f(0.0)) && all(duv <= vec2f(1.0))) {
       let t = textureSampleLevel(atlas, samp, mix(rect.xy, rect.zw, duv), 0.0);
       col = col * (1.0 - t.a) + t.rgb;
@@ -120,12 +120,14 @@ fn bridgeColor(i: VOut, up: bool, seed: f32) -> vec3f {
   let along = i.local.x + 0.5;
   let across = i.local.z + 0.5;
   if (up) {
-    let k = along * 11.0;
-    let seam = lineMask(fract(k + 0.5) - 0.5, 2.0);
-    var c = vec3f(0.95, 0.94, 0.92);
-    let grain = stripes(across * 5.0 + noise2(vec2f(k, across * 3.0) + seed) * 0.8, 0.12);
-    c = mix(c, INK, grain * 0.35);
-    let rail = lineMask(across - 0.08, 1.5) + lineMask(across - 0.92, 1.5);
+    let k = along * 8.0;
+    // Continuous distance to the nearest plank seam keeps derivatives sane at a distance.
+    let seam = lineMask(0.5 - abs(fract(k) - 0.5), 1.3);
+    var c = vec3f(0.96, 0.95, 0.93);
+    let grain = stripes(across * 4.0 + noise2(vec2f(k, across * 3.0) + seed) * 0.8, 0.08);
+    c = mix(c, INK, grain * 0.25);
+    let edge = min(across, 1.0 - across);
+    let rail = lineMask(edge - 0.06, 1.3);
     return mix(c, INK, clamp(seam + rail, 0.0, 1.0));
   }
   let h = stripes((along + across) * 20.0, 0.5);

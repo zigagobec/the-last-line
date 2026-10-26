@@ -1,5 +1,5 @@
 import { createGame, defaultRules } from './game';
-import { emptyAtlas } from './render/atlas';
+import { buildAtlas } from './render/atlas';
 import { OrbitCamera } from './render/camera';
 import { initGpu } from './render/gpu';
 import { Renderer } from './render/renderer';
@@ -12,12 +12,20 @@ async function boot() {
     document.body.textContent = 'WebGPU ni na voljo.';
     return;
   }
-  const renderer = await Renderer.create(gpu, emptyAtlas(gpu.device));
+  const renderer = await Renderer.create(gpu, await buildAtlas(gpu.device));
   const seed = Number(new URLSearchParams(location.search).get('seed') ?? 7);
   const state = createGame(defaultRules(), seed);
+  // Debug: show bridges over the generated gaps.
+  if (new URLSearchParams(location.search).has('bridges')) {
+    state.cells.forEach((c, i) => {
+      if (!c.land) c.bridge = i % 2 ? 'H' : 'V';
+    });
+  }
   const cam = new OrbitCamera(state.rules.size);
   const yaw = new URLSearchParams(location.search).get('yaw');
   if (yaw) cam.orbit(Number(yaw), 0);
+  const zoom = new URLSearchParams(location.search).get('zoom');
+  if (zoom) cam.zoom(Number(zoom));
   let last = performance.now();
   const frame = (now: number) => {
     cam.update((now - last) / 1000);

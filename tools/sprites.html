@@ -1,0 +1,8 @@
+<!doctype html><html><body style="margin:0;background:#cde">
+<script type="module">
+import { drawRat, drawPoof, drawDecal } from '../src/render/draw/sprites.ts';
+for (const c of [drawRat('#2d6cdf', 11), drawRat('#e0442e', 23), drawPoof(5), drawDecal(0, 40), drawDecal(1, 41), drawDecal(2, 42), drawDecal(3, 43)]) {
+  c.style.border = '1px solid #999'; c.style.margin = '4px'; c.style.background = '#fff';
+  document.body.appendChild(c);
+}
+</script></body></html>

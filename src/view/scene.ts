@@ -28,7 +28,7 @@ export interface BridgeView {
   drop: number;
 }
 
-export type SpriteName = 'tree' | 'sign' | 'rat0' | 'rat1' | 'poof' | 'shadow';
+export type SpriteName = 'tree' | 'sign' | 'rat0' | 'rat1' | 'poof';
 
 export interface SpriteView {
   name: SpriteName;
@@ -51,8 +51,8 @@ export interface SceneView {
   time: number;
 }
 
-export const TREE_HEIGHT = 1.45;
-export const RAT_HEIGHT = 0.95;
+export const TREE_HEIGHT = 1.3;
+export const RAT_HEIGHT = 1.05;
 export const SIGN_HEIGHT = 0.62;
 export const NO_TINT: Vec4 = [0, 0, 0, 0];
 
