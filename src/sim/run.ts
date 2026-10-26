@@ -3,6 +3,8 @@ import { applyAction, cell, cloneState, createGame, defaultRules, moveTargets, R
 import type { GameState, PlayerId, Rules } from '../game';
 import { chooseAction, type BotLevel } from './bot';
 
+declare const process: { argv: string[] };
+
 function arg(name: string, fallback: number): number {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? Number(process.argv[i + 1]) : fallback;
