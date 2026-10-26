@@ -51,6 +51,7 @@ export class App {
   private overShown = false;
   private last = performance.now();
   private paused = false;
+  private attract = false;
   private lastView: SceneView | null = null;
 
   constructor(
@@ -88,10 +89,11 @@ export class App {
     this.paused = false;
   }
 
-  /** Hide the HUD and freeze input (menus open). */
-  pause(paused: boolean): void {
+  /** Hide the HUD and freeze input while a menu is open; `attract` slowly spins the board behind the title screen. */
+  pause(paused: boolean, attract = false): void {
     this.paused = paused;
-    if (this.session) this.hud.show(!paused);
+    this.attract = paused && attract;
+    if (this.session) this.hud.show(!paused && !this.session.state.over);
   }
 
   /** A CSS-pixel point that targets tile `p` (sprites in front can hide its centre), for automated tests. */
@@ -308,6 +310,7 @@ export class App {
   private frame = (now: number): void => {
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
+    if (this.attract) this.cam.orbit(dt * 0.12, 0);
     this.cam.update(dt);
     const session = this.session;
     if (session) {
@@ -331,7 +334,7 @@ export class App {
           this.hud.setTool('move', false);
           this.hud.banner(newRound ? T.roundBanner(s.round, s.current) : T.turnBanner(s.current), s.current);
         }
-        if (s.over && !this.overShown) {
+        if (s.over && !this.overShown && !this.paused) {
           this.overShown = true;
           this.hud.show(false);
           this.cb.onGameOver(s);
