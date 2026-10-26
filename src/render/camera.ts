@@ -13,14 +13,51 @@ export function tileCenter(size: number, p: Pos): Vec3 {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
+function eyeFrom(target: Vec3, yaw: number, pitch: number, dist: number): Vec3 {
+  const cp = Math.cos(pitch);
+  return vec3.add(target, [dist * cp * Math.sin(yaw), dist * Math.sin(pitch), dist * cp * Math.cos(yaw)]);
+}
+
+function lookFrom(target: Vec3, yaw: number, pitch: number, dist: number): Mat4 {
+  return mat4.lookAt(eyeFrom(target, yaw, pitch, dist), target, [0, 1, 0]);
+}
+
+/** Free screen area (NDC) the board should fill: the HUD covers the top and bottom strips. */
+export interface FitBox {
+  left: number;
+  right: number;
+  bottom: number;
+  top: number;
+}
+export const DEFAULT_FIT: FitBox = { left: -0.95, right: 0.95, bottom: -0.68, top: 0.72 };
+/** Heights fitted on screen: tile bottoms and headroom for sprites standing on far tiles. */
+export const FIT_HEIGHTS = [0.75, -0.45];
+const DEFAULT_PITCH = 0.66;
+
+const portrait = (aspect: number) => aspect < 0.9;
+
+/** Landscape screens get the classic diagonal view; tall phones look along the board so tiles are bigger. */
+export function defaultYaw(aspect: number): number {
+  return portrait(aspect) ? 0.12 : Math.PI / 4;
+}
+
+/** Tall phones have spare height, so they look down more steeply. */
+export function defaultPitch(aspect: number): number {
+  return portrait(aspect) ? 0.92 : DEFAULT_PITCH;
+}
+
 /** Orbit camera around the board centre. Setters move a goal; `update` eases toward it. */
 export class OrbitCamera {
   yaw = Math.PI / 4;
-  pitch = 0.66;
-  /** Zoom multiplier on top of the aspect-fitted base distance. */
+  pitch = DEFAULT_PITCH;
+  /** Zoom multiplier on top of the fitted base distance. */
   zoomLevel = 1;
   private base: number;
-  target: Vec3 = [0, -0.9, 0.2];
+  /** NDC offset applied after projection, centring the board in the free screen area. */
+  private shift: [number, number] = [0, 0];
+  private fitKey = '';
+  private userRotated = false;
+  target: Vec3 = [0, -0.225, 0];
   readonly fov = FOV;
   private goal: { yaw: number; pitch: number; zoom: number };
 
@@ -29,23 +66,64 @@ export class OrbitCamera {
     this.goal = { yaw: this.yaw, pitch: this.pitch, zoom: 1 };
   }
 
-  /** Default view for a board of `size`, keeping the current yaw so a rematch doesn't spin the board. */
-  resetFor(size: number): void {
-    this.size = size;
-    this.goal.pitch = 0.66;
-    this.goal.zoom = 1;
-  }
-
   get distance(): number {
     return this.base * this.zoomLevel;
   }
 
-  /** Fit the whole board on screen for the given aspect ratio (portrait screens need more distance). */
-  fit(aspect: number): void {
-    this.base = this.size * Math.max(2.3, 2.5 / aspect);
+  /** Default view for a board of `size`; the next `fit` picks the yaw for the screen shape. */
+  resetFor(size: number): void {
+    this.size = size;
+    this.goal.zoom = 1;
+    this.userRotated = false;
+    this.fitKey = '';
+  }
+
+  /**
+   * Choose the distance and lens shift that make the whole board fill `box` for this aspect ratio.
+   * Computed for the default yaw, so turning the board never changes the zoom.
+   */
+  fit(aspect: number, box: FitBox = DEFAULT_FIT): void {
+    const key = `${aspect.toFixed(4)}:${this.size}:${box.left},${box.right},${box.bottom},${box.top}`;
+    if (key === this.fitKey) return;
+    this.fitKey = key;
+    const yaw = defaultYaw(aspect);
+    const pitch = defaultPitch(aspect);
+    if (!this.userRotated) {
+      this.goal.yaw = yaw;
+      this.goal.pitch = pitch;
+    }
+    const h = this.size / 2;
+    const corners: Vec3[] = [];
+    for (const x of [-h, h]) for (const z of [-h, h]) for (const y of FIT_HEIGHTS) corners.push([x, y, z]);
+    const extent = (dist: number) => {
+      const view = lookFrom(this.target, yaw, pitch, dist);
+      const vp = mat4.multiply(mat4.perspective(this.fov, aspect, 0.5, dist * 3), view);
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (const c of corners) {
+        const p = mat4.transform(vp, [c[0], c[1], c[2], 1]);
+        x0 = Math.min(x0, p[0] / p[3]);
+        x1 = Math.max(x1, p[0] / p[3]);
+        y0 = Math.min(y0, p[1] / p[3]);
+        y1 = Math.max(y1, p[1] / p[3]);
+      }
+      return { x0, x1, y0, y1 };
+    };
+    let lo = this.size * 0.5;
+    let hi = this.size * 12;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      const e = extent(mid);
+      const fits = e.x1 - e.x0 <= box.right - box.left && e.y1 - e.y0 <= box.top - box.bottom;
+      if (fits) hi = mid;
+      else lo = mid;
+    }
+    const e = extent(hi);
+    this.base = hi;
+    this.shift = [(box.left + box.right) / 2 - (e.x0 + e.x1) / 2, (box.bottom + box.top) / 2 - (e.y0 + e.y1) / 2];
   }
 
   orbit(dYaw: number, dPitch: number): void {
+    this.userRotated = true;
     this.goal.yaw += dYaw;
     this.goal.pitch = clamp(this.goal.pitch + dPitch, PITCH_MIN, PITCH_MAX);
   }
@@ -56,6 +134,7 @@ export class OrbitCamera {
 
   /** Rotate by a quarter turn, snapping to the diagonal views. */
   snap(dir: 1 | -1): void {
+    this.userRotated = true;
     const quarter = Math.PI / 2;
     const base = Math.round((this.goal.yaw - Math.PI / 4) / quarter) * quarter + Math.PI / 4;
     this.goal.yaw = base + dir * quarter;
@@ -69,12 +148,7 @@ export class OrbitCamera {
   }
 
   eye(): Vec3 {
-    const cp = Math.cos(this.pitch);
-    return vec3.add(this.target, [
-      this.distance * cp * Math.sin(this.yaw),
-      this.distance * Math.sin(this.pitch),
-      this.distance * cp * Math.cos(this.yaw),
-    ]);
+    return eyeFrom(this.target, this.yaw, this.pitch, this.distance);
   }
 
   view(): Mat4 {
@@ -82,7 +156,10 @@ export class OrbitCamera {
   }
 
   projection(aspect: number): Mat4 {
-    return mat4.perspective(this.fov, aspect, 0.5, this.distance * 3);
+    const shift = mat4.identity();
+    shift[12] = this.shift[0];
+    shift[13] = this.shift[1];
+    return mat4.multiply(shift, mat4.perspective(this.fov, aspect, 0.5, this.distance * 3));
   }
 
   viewProj(aspect: number): Mat4 {

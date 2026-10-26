@@ -23,6 +23,7 @@ export class PointerInput {
     canvas.addEventListener('pointermove', this.move);
     canvas.addEventListener('pointerup', this.up);
     canvas.addEventListener('pointercancel', this.cancel);
+    canvas.addEventListener('lostpointercapture', this.cancel);
     canvas.addEventListener('pointerleave', (e) => {
       if (e.pointerType === 'mouse') h.onHover(null);
     });

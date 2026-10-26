@@ -7,6 +7,8 @@ const scenarios = {
   trapWin: makeState(['1....', '.....', '.T...', 'TB.T.', '.T...']),
   draw: makeState(['A.T..', 'T....', '.....', '....T', '..T.B']),
   bridgeRotateErase: makeState(['1.....', '......', '..#...', '......', '......', '.....2']),
+  eraseCanopy: makeState(['1.....', '......', '..T...', '...T..', '......', '.....2']),
+  ghostBridges: makeState(['1.....', '.#..#.', '......', '..#...', '....#.', '.....2']),
 };
 for (const s of Object.values(scenarios)) s.seed = 5;
 console.log(JSON.stringify(scenarios));

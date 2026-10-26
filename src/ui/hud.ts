@@ -76,7 +76,7 @@ export class Hud {
       b.addEventListener('click', () => h.onTool(tool));
       this.buttons.set(tool, b);
     });
-    this.rotate = el('button', 'tool paper rotate', this.toolbar, '<span>⟲</span><kbd>R</kbd>');
+    this.rotate = el('button', 'tool paper rotate', this.toolbar, '<span>⇄</span><kbd>R</kbd>');
     this.rotate.title = T.rotateBridge;
     this.rotate.addEventListener('click', () => h.onRotateBridge());
   }

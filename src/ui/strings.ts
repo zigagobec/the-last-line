@@ -16,7 +16,7 @@ export const TOOL_LABEL: Record<Tool, string> = {
 export const TOOL_HINT: Record<Tool, string> = {
   move: 'Klikni sosednje polje, da se premakneš. Čez most skočiš na drugo stran.',
   tree: 'Klikni prazno polje in nanj nariši drevo. Drevo je ovira in enkrat zaščiti polje pred erozijo.',
-  bridge: 'Klikni vrzel z obarvanim mostom, da ga narišeš. R ali ⟲ obrne smer.',
+  bridge: 'Klikni vrzel z obarvanim mostom, da ga narišeš. R ali ⇄ obrne smer.',
   erase: 'Klikni drevo ali most, da ga zradiraš.',
   skip: 'Klikni še enkrat, da potrdiš preskok poteze.',
 };

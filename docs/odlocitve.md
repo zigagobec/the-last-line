@@ -121,3 +121,99 @@ polj (svojih minus nasprotnikovih). Rezultati veljajo za 300 iger na 8×8.
   dreves, kar je v duhu »ujemi nasprotnika«. Pri »2 rob + 0 nakl.« je ta delež
   manjši (56 %), igra pa daljša (26 krogov). Če se vam bo zdelo preveč naključno,
   poskusite to različico.
+
+### B5. Ročno igranje (kot oba igralca)
+- **Opažanje:** prvih ~4–5 krogov je mirnih, ker sta obe podgani daleč od roba in
+  ju erozija ne ogroža. Napetost nastane, ko se plošča skrči in so podgane blizu
+  robov ali v »žepih« med vrzelmi in drevesi.
+- **Kako deluje past:** nasprotnika ujameš, ko stoji na označenem polju in ima
+  največ en prost izhod. Če si na vrsti pred njim, mu zadnji izhod zapreš z
+  drevesom. Radiranje mu ne pomaga, ker porabi potezo in se nato ne more več
+  premakniti. To je zanimiv »tempo« trenutek, podoben šahu, in mehanika deluje.
+- **Past za samega sebe:** most, ki vodi na polje z drevesom, je neuporaben. V
+  testni igri sem z napačnim mostom sam zaprl svojo podgano v žep. Igra to
+  dobro kaznuje, kar je v redu.
+- **Ideje za naslednjo iteracijo** (če izberete to idejo): erozija, ki z vsakim
+  krogom narašča, da je začetek hitrejši, omejena zaloga črnila, doseg 2 kot
+  privzeto pravilo in plošča 6×6 za hitro igro.
+
+---
+
+## C. Odločitve pri implementaciji
+
+### C1. Preskok zahteva potrditev
+- **Odločitev:** »Preskoči« je treba klikniti dvakrat (ali dvakrat pritisniti 5).
+  Držanje tipke ne šteje.
+- **Obrazložitev:** preskok je edina poteza brez klika na ploščo, zato bi ga bilo
+  prelahko sprožiti po nesreči.
+
+### C2. Ko zmanjka robnih polj
+- **Vprašanje:** kaj, če je robnih polj manj, kot jih zahteva pravilo?
+- **Odločitev:** manjkajoča se izberejo naključno med preostalimi polji, tako da
+  skupno število izginulih polj ostane enako.
+- **Obrazložitev:** to se zgodi le čisto na koncu, ko polj skoraj ni več. Tako se
+  igra zanesljivo konča.
+
+### C3. Vsaj eno polje na krog
+- **Odločitev:** če v nastavitvah izbereš 0 robnih in 0 naključnih polj, se robno
+  nastavi na 1.
+- **Obrazložitev:** brez erozije se igra nikoli ne bi končala.
+
+### C4. Črte s črnilom
+- **Odločitev:** obrobe rišem samo tam, kjer se stikata različna predmeta (polje
+  ob polju, polje ob ozadju). Travnati rob na vrhu polj je narisan v »teksturi«
+  (shaderju), ne iz geometrije.
+- **Obrazložitev:** risbe v PDF-ju imajo valovit travnat rob namesto ravne črte
+  med vrhom in stranico. Z zaznavanjem normal bi dobili dvojne ravne črte.
+
+### C5. Mostovi so tanke 3D deske
+- **Odločitev:** most je tanka deska iz desk, ne ploščata 2D slika.
+- **Obrazložitev:** tako dobi enako obrobo s črnilom kot polja in je viden iz
+  vseh kotov kamere.
+
+### C6. Zamenjava sličic s PNG-ji
+- **Odločitev:** PNG v `public/sprites/` zamenja generirano sličico, če je njegovo
+  ime našteto v `PNG_SPRITES` (`src/render/atlas.ts`). Trenutno sta to `tree` in
+  `sign` iz PDF-ja.
+- **Obrazložitev:** statično gostovanje (GitHub Pages) ne zna izpisati vsebine
+  mape. Preizkušanje vseh imen bi v konzoli pustilo kup napak 404.
+
+### C7. Klik na drevo, podgano ali tablo
+- **Odločitev:** klik na narisano drevo, podgano ali tablo pomeni polje, na katerem
+  stoji, s pikselsko natančnim preverjanjem prosojnosti. Pri orodjih Premik in Most
+  gre klik skozi drevesa, ker drevo tam ni nikoli veljaven cilj.
+- **Obrazložitev:** brez tega je klik na krošnjo zadel polje za drevesom. To sem
+  odkril pri avtomatskem igranju, ko se klikom za podgano ni zgodilo nič.
+
+### C8. Orodje Drevo ne pobarva vseh polj
+- **Odločitev:** pri dosegu »kjerkoli« orodje Drevo ne obarva vseh dovoljenih
+  polj, ampak pokaže samo predogled drevesa pod miško. Nedovoljeno polje dobi
+  sivi križ. Pri omejenem dosegu se obarva območje dosega.
+- **Obrazložitev:** sicer bi bila pobarvana cela plošča, kar ne pove nič.
+
+### C9. Drevesa pred podgano postanejo prosojna
+- **Odločitev:** drevo, ki zakriva vsaj ~30 % podgane, se izriše prosojno.
+- **Obrazložitev:** obkrožena podgana se je za drevesi popolnoma skrila, kar
+  krši cilj »igralec mora vedno videti, kaj se dogaja«.
+
+### C10. Opozorilo za nevarno polje
+- **Odločitev:** ko igralec stoji na polju, ki bo izginilo, HUD to pokaže v
+  rdečem.
+
+### C11. Kamera na telefonu
+- **Odločitev:** na pokončnih zaslonih kamera gleda bolj od zgoraj in skoraj
+  vzdolž plošče. Na širokih zaslonih ostane klasičen diagonalni »izometrični«
+  pogled. Plošča se vedno točno prilega prostoru med zgornjo in spodnjo vrstico.
+- **Obrazložitev:** na telefonu so bila polja pri diagonalnem pogledu premajhna
+  za prst (~35 px). Zdaj merijo ~45 px.
+
+### C12. Testni vmesnik `window.__game`
+- **Odločitev:** ostane tudi v objavljeni različici.
+- **Obrazložitev:** prek njega avtomatski testi igrajo celo igro s pravimi kliki.
+  Pri igri za dva na isti napravi goljufanje prek konzole ni problem.
+
+### C13. PDF ni v javnem repozitoriju
+- **Odločitev:** v javni repozitorij gre samo igra in iz PDF-ja izrezani risbi
+  (drevo, tabla). Sam PDF z vašim dizajnom ostane lokalno.
+- **Obrazložitev:** objaviti si me prosil igro, za objavo celotnega dokumenta
+  nisem imel dovoljenja.

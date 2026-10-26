@@ -189,8 +189,9 @@ export class Renderer {
   resize(): void {
     const { canvas, device } = this.gpu;
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.max(1, Math.round(canvas.clientWidth * this.dpr));
-    const h = Math.max(1, Math.round(canvas.clientHeight * this.dpr));
+    const max = device.limits.maxTextureDimension2D;
+    const w = Math.min(max, Math.max(1, Math.round(canvas.clientWidth * this.dpr)));
+    const h = Math.min(max, Math.max(1, Math.round(canvas.clientHeight * this.dpr)));
     if (this.targets && this.targets.width === w && this.targets.height === h) return;
     canvas.width = w;
     canvas.height = h;

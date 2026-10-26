@@ -8,7 +8,16 @@ const browser = await chromium.launch({
   channel: 'chromium-headless-shell',
   args: ['--enable-unsafe-webgpu', '--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan', '--use-angle=vulkan', '--enable-unsafe-swiftshader'],
 });
-const page = await browser.newPage({ viewport: { width: Number(w), height: Number(h) } });
+const MOBILE = !!process.env.MOBILE;
+const page = await browser.newPage(
+  MOBILE
+    ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
+    : { viewport: { width: Number(w), height: Number(h) } },
+);
+const pick = async (tool) => {
+  if (MOBILE) await page.locator(`.tool-${tool}`).tap();
+  else await page.keyboard.press(TOOL_KEY[tool]);
+};
 const errors = [];
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
@@ -19,6 +28,7 @@ const summary = [];
 for (let g = 0; g < Number(gamesArg); g++) {
   if (g === 0) await page.getByRole('button', { name: 'Igraj' }).click();
   else await page.getByRole('button', { name: 'Še enkrat' }).click();
+  if (MOBILE) await page.screenshot({ path: `${outDir}/mobile-start.png` });
   await page.waitForTimeout(300);
   let steps = 0;
   const counts = {};
@@ -31,15 +41,16 @@ for (let g = 0; g < Number(gamesArg); g++) {
     counts[a.type] = (counts[a.type] ?? 0) + 1;
     const before = JSON.stringify([s.round, s.acted]);
     if (a.type === 'skip') {
-      await page.keyboard.press('5');
-      await page.keyboard.press('5');
+      await pick('skip');
+      await pick('skip');
     } else {
-      await page.keyboard.press(TOOL_KEY[a.type]);
+      await pick(a.type);
       const target = a.type === 'move' ? a.to : a.at;
       let pt = await page.evaluate((p) => window.__game.clickPointFor(p), target);
       for (let turn = 0; !pt && turn < 3; turn++) {
         // Tile hidden behind sprites from this angle: rotate the camera like a player would.
-        await page.keyboard.press('e');
+        if (MOBILE) await page.getByRole('button', { name: 'Zavrti desno (E)' }).tap();
+        else await page.keyboard.press('e');
         await page.waitForTimeout(500);
         pt = await page.evaluate((p) => window.__game.clickPointFor(p), target);
       }
@@ -47,9 +58,12 @@ for (let g = 0; g < Number(gamesArg); g++) {
         errors.push(`game ${g} step ${steps}: tile ${JSON.stringify(target)} not clickable from any angle`);
         pt = await page.evaluate((p) => window.__game.screenOf(p), target);
       }
-      await page.mouse.move(pt.x, pt.y);
-      await page.waitForTimeout(30);
-      await page.mouse.click(pt.x, pt.y);
+      if (MOBILE) await page.touchscreen.tap(pt.x, pt.y);
+      else {
+        await page.mouse.move(pt.x, pt.y);
+        await page.waitForTimeout(30);
+        await page.mouse.click(pt.x, pt.y);
+      }
     }
     await page.waitForTimeout(50);
     const after = await page.evaluate(() => { const st = window.__game.state(); return JSON.stringify([st.round, st.acted]); });

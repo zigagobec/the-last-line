@@ -22,6 +22,14 @@ export interface MenuHandlers {
   onShowMenu(): void;
 }
 
+/** Seed from user text (settings field or ?seed=): a non-negative 32-bit integer, or undefined for random. */
+export function parseSeed(text: string | null): number | undefined {
+  if (text === null || !text.trim()) return undefined;
+  const n = Number(text.trim());
+  if (!Number.isFinite(n)) return undefined;
+  return Math.abs(Math.floor(n)) % 2 ** 32;
+}
+
 export function loadRules(): Rules {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -102,8 +110,7 @@ export class Menu {
   }
 
   private seed(): number | undefined {
-    const n = Number(this.seedText.trim());
-    return this.seedText.trim() && Number.isFinite(n) ? Math.abs(Math.floor(n)) : undefined;
+    return parseSeed(this.seedText);
   }
 
   showStart(): void {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mat4, vec3 } from '../../src/render/math';
-import { OrbitCamera, pickTile, tileCenter } from '../../src/render/camera';
+import { FIT_HEIGHTS, OrbitCamera, pickTile, tileCenter } from '../../src/render/camera';
 
 describe('mat4', () => {
   it('invert(m) * m is identity', () => {
@@ -60,4 +60,37 @@ describe('camera picking', () => {
     cam.update(10);
     expect(cam.pitch).toBeGreaterThanOrEqual(0.3);
   });
+});
+
+describe('camera fit', () => {
+  const corners = (size: number) => {
+    const h = size / 2;
+    const out: [number, number, number][] = [];
+    for (const x of [-h, h]) for (const z of [-h, h]) for (const y of FIT_HEIGHTS) out.push([x, y, z]);
+    return out;
+  };
+  const box = { left: -0.95, right: 0.95, bottom: -0.68, top: 0.72 };
+  for (const aspect of [0.46, 0.75, 1, 1.6, 2.2]) {
+    it(`fits the whole board snugly inside the free screen area at aspect ${aspect}`, () => {
+      const cam = new OrbitCamera(8);
+      cam.fit(aspect, box);
+      cam.update(10);
+      const vp = cam.viewProj(aspect);
+      let maxX = 0;
+      let maxY = 0;
+      for (const c of corners(8)) {
+        const p = mat4.transform(vp, [c[0], c[1], c[2], 1]);
+        const x = p[0] / p[3];
+        const y = p[1] / p[3];
+        expect(x).toBeGreaterThanOrEqual(box.left - 1e-3);
+        expect(x).toBeLessThanOrEqual(box.right + 1e-3);
+        expect(y).toBeGreaterThanOrEqual(box.bottom - 1e-3);
+        expect(y).toBeLessThanOrEqual(box.top + 1e-3);
+        maxX = Math.max(maxX, Math.abs(x) / box.right);
+        maxY = Math.max(maxY, y > 0 ? y / box.top : y / box.bottom);
+      }
+      // snug: the board touches the box on at least one axis
+      expect(Math.max(maxX, maxY)).toBeGreaterThan(0.9);
+    });
+  }
 });

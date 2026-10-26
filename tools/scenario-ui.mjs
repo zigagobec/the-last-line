@@ -113,6 +113,51 @@ await clickTile(1, 1);
 s = await state();
 check('click during animation ignored', busyNow && s.acted === 1 && !cell(s, 1, 1).tree, `busy=${busyNow}`);
 
+// 7. Erase tool: hovering a tree canopy is stable and a canopy click erases that tree.
+await load('eraseCanopy');
+await page.keyboard.press('4');
+for (const [tx, ty] of [[2, 2], [3, 3]]) {
+  const top = await page.evaluate((p) => window.__game.screenOf(p), { x: tx, y: ty });
+  const cx = top.x;
+  const cy = top.y - 45; // up into the canopy, above the tile
+  await page.mouse.move(cx, cy);
+  const cursors = [];
+  for (let i = 0; i < 8; i++) {
+    await page.waitForTimeout(40);
+    cursors.push(await page.evaluate(() => document.getElementById('gfx').style.cursor));
+  }
+  check(`erase hover on canopy ${tx},${ty} is stable`, cursors.every((c) => c === 'pointer'), cursors.join(','));
+}
+{
+  const top = await page.evaluate((p) => window.__game.screenOf(p), { x: 3, y: 3 });
+  await page.mouse.click(top.x, top.y - 45);
+  await idle();
+  s = await state();
+  check('canopy click erases the tree', cell(s, 3, 3).tree === false);
+}
+
+// 8. Bridge previews are drawn in the player's colour (not black).
+await load('ghostBridges');
+await page.keyboard.press('3');
+await page.mouse.move(5, 5);
+await page.waitForTimeout(400);
+await page.screenshot({ path: `${outDir}/8-ghosts.png` });
+{
+  const g = await page.evaluate((p) => window.__game.screenOf(p), { x: 2, y: 3 });
+  const shot = await page.screenshot({ clip: { x: g.x - 6, y: g.y - 3, width: 12, height: 6 } });
+  const { PNG } = await import('pngjs').catch(() => ({ PNG: null }));
+  if (PNG) {
+    const img = PNG.sync.read(shot);
+    let blue = 0, dark = 0;
+    for (let i = 0; i < img.data.length; i += 4) {
+      const [r, gg, b] = [img.data[i], img.data[i + 1], img.data[i + 2]];
+      if (b > r + 30) blue++;
+      if (r + gg + b < 150) dark++;
+    }
+    check('ghost bridge is tinted, not black', blue > dark, `blue=${blue} dark=${dark}`);
+  }
+}
+
 check('no console errors', errors.length === 0, errors.join(' | '));
 console.log(results.join('\n'));
 await browser.close();

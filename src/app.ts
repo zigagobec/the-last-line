@@ -14,8 +14,7 @@ import {
   type Rules,
 } from './game';
 import { OrbitCamera, pickTile } from './render/camera';
-import { frameAlpha } from './render/atlas';
-import { mat4, vec3, type Vec3 } from './render/math';
+import { mat4 } from './render/math';
 import type { Renderer } from './render/renderer';
 import { Hud } from './ui/hud';
 import { PointerInput } from './ui/input';
@@ -32,6 +31,7 @@ import {
   type SceneView,
   type SpriteName,
 } from './view/scene';
+import { pickSprite } from './view/pick';
 import { Session } from './view/session';
 
 const TOOL_KEYS: Record<string, Tool> = { '1': 'move', '2': 'tree', '3': 'bridge', '4': 'erase', '5': 'skip' };
@@ -164,7 +164,7 @@ export class App {
   }
 
   private key(e: KeyboardEvent): void {
-    if (this.paused || !this.session || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (this.paused || !this.session || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.toLowerCase();
     if (TOOL_KEYS[k]) this.selectTool(TOOL_KEYS[k]);
     else if (k === 'r') this.rotateBridge();
@@ -178,51 +178,19 @@ export class App {
     return this.targetAt(this.pointer)?.p ?? null;
   }
 
-  /**
-   * The board object drawn under an NDC point: trees, signs and rats stand up from their
-   * tiles and hide what is behind them, so a click on one means its own tile.
-   */
-  private spriteAt(ndc: [number, number]): { key: string; p: Pos } | null {
-    const view = this.lastView;
-    const s = this.state;
-    if (!view || !s) return null;
-    const aspect = this.renderer.aspect;
-    const vp = this.cam.viewProj(aspect);
-    const v = this.cam.view();
-    const right: Vec3 = [v[0], v[4], v[8]];
-    const up: Vec3 = [v[1], v[5], v[9]];
-    const eye = this.cam.eye();
-    const project = (p: Vec3) => {
-      const c = mat4.transform(vp, [p[0], p[1], p[2], 1]);
-      return [c[0] / c[3], c[1] / c[3]];
-    };
-    const candidates = view.sprites
-      .filter((sp) => /^(tree|sign):|^rat[01]$/.test(sp.key) && sp.alpha > 0.5)
-      .sort((a, b) => vec3.dot(vec3.sub(a.pos, eye), vec3.sub(a.pos, eye)) - vec3.dot(vec3.sub(b.pos, eye), vec3.sub(b.pos, eye)));
-    for (const sp of candidates) {
-      const frame = this.renderer.atlas.frames[sp.name];
-      if (!frame) continue;
-      const w = sp.height * frame.aspect;
-      const bl = project(vec3.add(sp.pos, vec3.scale(right, -w / 2)));
-      const tr = project(vec3.add(vec3.add(sp.pos, vec3.scale(right, w / 2)), vec3.scale(up, sp.height)));
-      if (ndc[0] < bl[0] || ndc[0] > tr[0] || ndc[1] < bl[1] || ndc[1] > tr[1]) continue;
-      let u = (ndc[0] - bl[0]) / (tr[0] - bl[0]);
-      if (sp.flip) u = 1 - u;
-      const vv = (tr[1] - ndc[1]) / (tr[1] - bl[1]);
-      if (frameAlpha(this.renderer.atlas, frame, u, vv) < 0.3) continue;
-      const m = /^(?:tree|sign):(\d+),(\d+)$/.exec(sp.key);
-      const p = m ? { x: Number(m[1]), y: Number(m[2]) } : s.players[sp.key === 'rat0' ? 0 : 1];
-      return { key: sp.key, p };
-    }
-    return null;
-  }
-
   /** Tile targeted by an NDC point, looking at standing sprites first, then the ground. */
   private targetAt(ndc: [number, number]): { p: Pos; key: string | null } | null {
-    const hit = this.spriteAt(ndc);
-    if (hit) return hit;
     const s = this.state;
-    if (!s) return null;
+    if (!s || !this.lastView) return null;
+    // Trees are never a target for moving or bridging, so look through them.
+    const throughTrees = this.tool === 'move' || this.tool === 'bridge';
+    const hit = pickSprite(
+      this.lastView,
+      ndc,
+      { vp: this.cam.viewProj(this.renderer.aspect), view: this.cam.view(), eye: this.cam.eye(), atlas: this.renderer.atlas, players: s.players },
+      (key) => throughTrees && key.startsWith('tree:'),
+    );
+    if (hit) return hit;
     const p = pickTile(this.cam, ndc[0], ndc[1], this.renderer.aspect, s.rules.size);
     return p ? { p, key: null } : null;
   }

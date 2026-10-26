@@ -4,7 +4,7 @@ import { chooseAction } from './sim/bot';
 import { buildAtlas } from './render/atlas';
 import { initGpu } from './render/gpu';
 import { Renderer } from './render/renderer';
-import { loadRules, Menu } from './ui/menu';
+import { loadRules, Menu, parseSeed } from './ui/menu';
 import { T } from './ui/strings';
 
 declare global {
@@ -45,8 +45,7 @@ async function boot() {
   const renderer = await Renderer.create(gpu, await buildAtlas(gpu.device));
   const params = new URLSearchParams(location.search);
   const randomSeed = () => Math.floor(Math.random() * 1e6);
-  const urlSeed = params.get('seed');
-  let firstSeed: number | undefined = urlSeed !== null && Number.isFinite(Number(urlSeed)) ? Number(urlSeed) : undefined;
+  let firstSeed = parseSeed(params.get('seed'));
   let menu: Menu;
   const app = new App(renderer, canvas, {
     onGameOver: (s) => {
@@ -100,4 +99,8 @@ async function boot() {
   };
 }
 
-boot();
+boot().catch((err) => {
+  console.error(err);
+  document.getElementById('loading')?.remove();
+  fatal(T.noWebGPU);
+});

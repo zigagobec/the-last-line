@@ -138,8 +138,10 @@ export function fadeOccluders(view: SceneView, vp: Mat4, viewM: Mat4, eye: Vec3,
     for (const tree of view.sprites) {
       if (tree.name !== 'tree' || dist(tree.pos) >= dist(rat.pos)) continue;
       const t = spriteRect(tree, aspects.tree ?? 1, vp, right, up, 0.75);
-      const overlap = t.x0 < r.x1 && t.x1 > r.x0 && t.y0 < r.y1 && t.y1 > r.y0;
-      if (overlap) tree.alpha = Math.min(tree.alpha, 0.38);
+      const ox = Math.max(0, Math.min(t.x1, r.x1) - Math.max(t.x0, r.x0));
+      const oy = Math.max(0, Math.min(t.y1, r.y1) - Math.max(t.y0, r.y0));
+      const covered = (ox * oy) / ((r.x1 - r.x0) * (r.y1 - r.y0));
+      if (covered > 0.3) tree.alpha = Math.min(tree.alpha, 0.38);
     }
   }
 }

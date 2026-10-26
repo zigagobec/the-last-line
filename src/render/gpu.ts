@@ -15,7 +15,12 @@ export async function initGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> {
     return null;
   }
   if (!adapter) return null;
-  const device = await adapter.requestDevice();
+  let device: GPUDevice;
+  try {
+    device = await adapter.requestDevice();
+  } catch {
+    return null;
+  }
   device.addEventListener('uncapturederror', (e) => console.error('WebGPU error:', (e as GPUUncapturedErrorEvent).error.message));
   const context = canvas.getContext('webgpu');
   if (!context) return null;
