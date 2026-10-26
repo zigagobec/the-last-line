@@ -17,10 +17,12 @@ await page.waitForFunction(() => window.__game && window.__game.state());
 const TOOL_KEY = { move: '1', tree: '2', bridge: '3', erase: '4', skip: '5' };
 const summary = [];
 for (let g = 0; g < Number(gamesArg); g++) {
-  if (g > 0) await page.evaluate(() => window.__game.start());
+  if (g === 0) await page.getByRole('button', { name: 'Igraj' }).click();
+  else await page.getByRole('button', { name: 'Še enkrat' }).click();
+  await page.waitForTimeout(300);
   let steps = 0;
   const counts = {};
-  while (steps < 400) {
+  while (steps < 300) {
     await page.waitForFunction(() => !window.__game.busy(), null, { timeout: 15000 });
     await page.waitForTimeout(60);
     const s = await page.evaluate(() => window.__game.state());
@@ -63,6 +65,7 @@ for (let g = 0; g < Number(gamesArg); g++) {
   await page.waitForTimeout(800);
   const s = await page.evaluate(() => window.__game.state());
   await page.screenshot({ path: `${outDir}/g${g}-end.png` });
+  if (!(await page.getByRole('button', { name: 'Še enkrat' }).isVisible())) errors.push(`game ${g}: end screen not shown`);
   summary.push({ game: g, seed: s.seed, rounds: s.round, winner: s.winner, steps, counts });
 }
 console.log(JSON.stringify(summary, null, 1));

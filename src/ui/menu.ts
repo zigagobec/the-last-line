@@ -11,7 +11,7 @@ const WIN_LINES = [
   'Nasprotnik je ostal brez tal pod nogami.',
   'Ta košček papirja je zdaj samo tvoj. Vsaj še nekaj časa.',
   'Podgana na papirju, kralj na plošči.',
-  'Erozija ima okus, in tokrat ji nisi bil všeč.',
+  'Erozija je tokrat raje pojedla nasprotnika.',
 ];
 const DRAW_LINES = ['Praznina ni izbirčna.', 'Obe podgani sta zdrsnili z zadnje črte.', 'Papir je zmagal.'];
 
