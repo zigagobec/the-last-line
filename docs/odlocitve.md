@@ -240,3 +240,12 @@ polj (svojih minus nasprotnikovih). Rezultati veljajo za 300 iger na 8×8.
 - **Obrazložitev:** na telefonu, obrnjenem na bok, je plošča prej zlezla pod
   orodno vrstico, na majhnem telefonu pa se je orodna vrstica razlomila v dve
   vrstici.
+
+### C17. Obračanje mostu brez dodatnega gumba
+- **Odločitev:** smer mostu obrneš s ponovnim klikom na gumb »Most« ali s
+  tipko R. Majhna oznaka ⇄ na gumbu pokaže, da je obrat na tej plošči mogoč.
+  Ločenega gumba ni več.
+- **Obrazložitev:** dodatni gumb je na telefonu razlomil orodno vrstico v dve
+  vrstici, zato je plošča poskočila ravno v trenutku, ko si izbral Most.
+- **Pri orodju Most** klik gleda skozi drevesa, table in podgane, saj se most
+  lahko nariše samo na vrzel, na kateri nič ne stoji.

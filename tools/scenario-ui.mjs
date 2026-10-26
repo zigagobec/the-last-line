@@ -89,14 +89,17 @@ await page.screenshot({ path: `${outDir}/4-draw.png` });
 
 // 5. Bridge orientation toggle with R, then erase it.
 await load('bridgeRotateErase');
+const barBefore = await page.locator('.toolbar').boundingBox();
 await page.keyboard.press('3');
 await page.waitForTimeout(150);
-check('rotate button visible for two-way gap', await page.locator('.tool.rotate.visible').isVisible());
-await page.keyboard.press('r');
+check('bridge button shows it can rotate', (await page.locator('.tool-bridge.rotatable').count()) === 1);
+const barAfter = await page.locator('.toolbar').boundingBox();
+check('toolbar keeps its size when the bridge tool is picked', barBefore.height === barAfter.height && barBefore.width === barAfter.width);
+await page.locator('.tool-bridge').click();
 await clickTile(2, 2);
 await idle();
 s = await state();
-check('R rotates bridge to V', cell(s, 2, 2).bridge === 'V', String(cell(s, 2, 2).bridge));
+check('second press on Most rotates the bridge to V', cell(s, 2, 2).bridge === 'V', String(cell(s, 2, 2).bridge));
 await page.screenshot({ path: `${outDir}/5-bridgeV.png` });
 await page.keyboard.press('4');
 await clickTile(2, 2);
@@ -157,6 +160,18 @@ await page.screenshot({ path: `${outDir}/8-ghosts.png` });
     }
     check('ghost bridge is tinted, not black', blue > dark, `blue=${blue} dark=${dark}`);
   }
+}
+
+// 9. A bridge can be drawn on a gap even where a rat standing in front covers it on screen.
+await load('bridgeBehindRat');
+await page.keyboard.press('3');
+{
+  const g = await page.evaluate((p) => window.__game.screenOf(p), { x: 2, y: 2.15 });
+  const r = await page.evaluate((p) => window.__game.screenOf(p), { x: 3, y: 3 });
+  await page.mouse.click(g.x, g.y);
+  await idle();
+  s = await state();
+  check('bridge tool looks through rats', cell(s, 2, 2).bridge !== null, `gap ${JSON.stringify(g)} rat tile ${JSON.stringify(r)}`);
 }
 
 check('no console errors', errors.length === 0, errors.join(' | '));

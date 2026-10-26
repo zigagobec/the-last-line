@@ -9,6 +9,8 @@ const scenarios = {
   bridgeRotateErase: makeState(['1.....', '......', '..#...', '......', '......', '.....2']),
   eraseCanopy: makeState(['1.....', '......', '..T...', '...T..', '......', '.....2']),
   ghostBridges: makeState(['1.....', '.#..#.', '......', '..#...', '....#.', '.....2']),
+  // red rat diagonally in front of the gap (towards the default camera), covering it on screen
+  bridgeBehindRat: makeState(['......', '......', '..#...', '...2..', '1.....', '......']),
 };
 for (const s of Object.values(scenarios)) s.seed = 5;
 console.log(JSON.stringify(scenarios));

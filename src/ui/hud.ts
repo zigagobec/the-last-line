@@ -14,7 +14,6 @@ const TOOLS: Tool[] = ['move', 'tree', 'bridge', 'erase', 'skip'];
 
 export interface HudHandlers {
   onTool(tool: Tool): void;
-  onRotateBridge(): void;
   onCamera(dir: 1 | -1): void;
   onHelp(): void;
   onMenu(): void;
@@ -37,7 +36,6 @@ export class Hud {
   private hint: HTMLElement;
   private toolbar: HTMLElement;
   private buttons = new Map<Tool, HTMLButtonElement>();
-  private rotate: HTMLButtonElement;
   private bannerTimer = 0;
   private status: HTMLElement;
   /** Tallest top HUD seen at this window size: the board only ever moves away from it, never back and forth. */
@@ -83,9 +81,6 @@ export class Hud {
       b.addEventListener('click', () => h.onTool(tool));
       this.buttons.set(tool, b);
     });
-    this.rotate = el('button', 'tool paper rotate', this.toolbar, '<span>⇄</span><kbd>R</kbd>');
-    this.rotate.title = T.rotateBridge;
-    this.rotate.addEventListener('click', () => h.onRotateBridge());
   }
 
   /** Screen area (NDC) left free between the top HUD and the toolbar, for fitting the board. */
@@ -130,7 +125,9 @@ export class Hud {
     this.toolKey = key;
     this.hintUntil = 0;
     for (const [t, b] of this.buttons) b.classList.toggle('active', t === tool);
-    this.rotate.classList.toggle('visible', tool === 'bridge' && rotatable);
+    const bridge = this.buttons.get('bridge')!;
+    bridge.classList.toggle('rotatable', tool === 'bridge' && rotatable);
+    bridge.title = tool === 'bridge' && rotatable ? T.rotateBridge : '';
     this.hint.textContent = TOOL_HINT[tool];
     this.hint.classList.remove('shake');
   }

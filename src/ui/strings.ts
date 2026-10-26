@@ -16,7 +16,7 @@ export const TOOL_LABEL: Record<Tool, string> = {
 export const TOOL_HINT: Record<Tool, string> = {
   move: 'Klikni sosednje polje, da se premakneš. Čez most skočiš na drugo stran.',
   tree: 'Klikni prazno polje in nanj nariši drevo. Drevo je ovira in enkrat zaščiti polje pred erozijo.',
-  bridge: 'Klikni vrzel z obarvanim mostom, da ga narišeš. R ali ⇄ obrne smer.',
+  bridge: 'Klikni vrzel z obarvanim mostom, da ga narišeš. Še en klik na Most (ali R) obrne smer.',
   erase: 'Klikni drevo ali most, da ga zradiraš.',
   skip: 'Klikni še enkrat, da potrdiš preskok poteze.',
 };
@@ -34,7 +34,7 @@ export const T = {
   denied: 'Tja ne gre.',
   confirmTap: 'Tapni še enkrat za potrditev.',
   danger: 'Pozor: stojiš na polju, ki bo izginilo!',
-  rotateBridge: 'Obrni most (R)',
+  rotateBridge: 'Klikni še enkrat, da obrneš most (R)',
   camLeft: 'Zavrti levo (Q)',
   camRight: 'Zavrti desno (E)',
   noWebGPU:

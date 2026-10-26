@@ -238,7 +238,7 @@ export class Menu {
       'Upravljanje',
       'Izberi orodje spodaj (ali tipke 1–5) in klikni polje. Obarvana polja pokažejo, kam lahko klikneš.',
       'Na telefonu tapni orodje in nato polje. Drevo, most in radirka pokažejo predogled, drugi tap ga potrdi.',
-      'Vleci z miško ali prstom, da zavrtiš ploščo. Kolešček ali dva prsta za povečavo. Q/E zavrtita za četrt obrata, R obrne most.',
+      'Vleci z miško ali prstom, da zavrtiš ploščo. Kolešček ali dva prsta za povečavo. Q/E zavrtita za četrt obrata. Most obrneš s ponovnim klikom na Most ali s tipko R.',
     );
     const btns = el('div', 'buttons', c);
     button(btns, 'Razumem', 'primary', back);

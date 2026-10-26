@@ -67,7 +67,6 @@ export class App {
     this.cam = new OrbitCamera(8);
     this.hud = new Hud(document.body, {
       onTool: (t) => this.selectTool(t),
-      onRotateBridge: () => this.rotateBridge(),
       onCamera: (d) => this.cam.snap(d),
       onHelp: () => cb.onHelp(),
       onMenu: () => cb.onMenu(),
@@ -157,6 +156,11 @@ export class App {
       this.dispatch({ type: 'skip' });
       return;
     }
+    if (t === 'bridge' && this.tool === 'bridge') {
+      // Pressing Most again turns the bridge, so touch players need no extra button.
+      this.rotateBridge();
+      return;
+    }
     this.tool = t;
     this.pendingTap = null;
     this.hud.setTool(t, false);
@@ -164,6 +168,7 @@ export class App {
 
   private rotateBridge(): void {
     this.bridgeDir = this.bridgeDir === 'H' ? 'V' : 'H';
+    this.pendingTap = null;
   }
 
   private key(e: KeyboardEvent): void {
@@ -185,13 +190,14 @@ export class App {
   private targetAt(ndc: [number, number]): { p: Pos; key: string | null } | null {
     const s = this.state;
     if (!s || !this.lastView) return null;
-    // Trees are never a target for moving or bridging, so look through them.
-    const throughTrees = this.tool === 'move' || this.tool === 'bridge';
+    // Bridges only go on gaps, where nothing stands, so the bridge tool looks through every sprite;
+    // trees are never a move target, so moving looks through trees.
+    const skip = (key: string) => this.tool === 'bridge' || (this.tool === 'move' && key.startsWith('tree:'));
     const hit = pickSprite(
       this.lastView,
       ndc,
       { vp: this.cam.viewProj(this.renderer.aspect), view: this.cam.view(), eye: this.cam.eye(), atlas: this.renderer.atlas, players: s.players },
-      (key) => throughTrees && key.startsWith('tree:'),
+      skip,
     );
     if (hit) return hit;
     const p = pickTile(this.cam, ndc[0], ndc[1], this.renderer.aspect, s.rules.size);
